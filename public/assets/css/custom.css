@@ -1,0 +1,9 @@
+.form-button{
+    border:none; 
+    background-color:inherit;
+    margin-left: -0.5rem;
+}
+.form-button:hover{
+    border: none;
+    background-color: transparent;
+}
