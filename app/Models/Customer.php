@@ -27,16 +27,19 @@ class Customer extends Model
 
     public function rooms()
     {
-         return $this->hasManyThrough(
-            RoomShop::class,
-            Agreement::class,
-            'customer_id', // Foreign key on agreements table
-            'id',          // Foreign key on room_shops table
-            'id',          // Local key on customers table
-            'room_shop_id' // Local key on agreements table
-        )->where('room_shops.availability', 0);
-       
+        $roomIds = $this->agreements()
+            ->where('status', 'active')
+            ->pluck('room_shop_ids')
+            ->filter()
+            ->flatMap(function ($json) {
+                return json_decode($json, true);
+            })->unique()->values();
+
+        return RoomShop::whereIn('id', $roomIds)
+            ->where('availability', 0)
+            ->get();
     }
+
 
     public function agreements()
     {
@@ -65,7 +68,7 @@ class Customer extends Model
     {
         static::deleting(function ($customer) {
             // Reset all rooms assigned to this customer
-            foreach ($customer->rooms as $room) {
+            foreach ($customer->rooms() as $room) {
                 $room->update([
                     'customer_id' => null,
                     'availability' => 1 // Available

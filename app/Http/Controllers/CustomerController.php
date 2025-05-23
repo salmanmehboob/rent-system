@@ -18,16 +18,9 @@ class CustomerController extends Controller
 
         if ($request->ajax()) {
             // Proper eager loading
-              $customers = Customer::with([
-                    'building',
-                    'agreements' => function($query) {
-                        $query->where('status', 'active')
-                            ->whereHas('room', function($q) {
-                                $q->where('availability', 0);
-                            });
-                    },
-                    'witnesses'
-                ])->get();
+              $customers = Customer::with(['building','agreements' => function($query) 
+              {$query->where('status', 'active');},'witnesses'])->get();
+
             return DataTables()->of($customers)
                 ->addColumn('building_name', function ($customer) {
                     return $customer->building->name ?? 'N/A';
@@ -39,14 +32,18 @@ class CustomerController extends Controller
                 })
                 // Agreement section (get first agreement only)
                 ->addColumn('room_shop_no', function ($customer) {
-                    $activeAgreement = $customer->agreements->first(function ($agreement) {
-                        return $agreement->status === 'active' && 
-                            $agreement->room && 
-                            $agreement->room->availability == 0;
-                    });
-                    
-                    return $activeAgreement ? $activeAgreement->room->no : 'N/A';
+                    $agreement = $customer->agreements->first();
+                    if (!$agreement || !$agreement->room_shop_ids) {
+                        return 'N/A';
+                    }
+
+                    $roomIds = json_decode($agreement->room_shop_ids, true);
+                    $roomNos = RoomShop::whereIn('id', $roomIds)->pluck('no')->toArray();
+
+                    return implode(', ', $roomNos);
                 })
+
+
                 ->addColumn('start_date', function ($customer) {
                     return $customer->agreements->first()->start_date ?? 'N/A';
                 })
@@ -73,11 +70,12 @@ class CustomerController extends Controller
                     return $customer->witnesses->first()->address ?? 'N/A';
                 })
                 // Actions
-                ->addColumn('actions', function ($customer) {
+               ->addColumn('actions', function ($customer) {
                     $agreement = $customer->agreements->first();
-                    $room = $agreement?->room;
-                    $roomNo = $room?->no ?? '';
-                    $roomId = $room?->id ?? '';
+
+                    $roomIds = json_decode($agreement?->room_shop_ids ?? '[]');
+                    $roomNos = RoomShop::whereIn('id', $roomIds)->pluck('no')->toArray();
+
                     $startDate = $agreement?->start_date ?? '';
                     $endDate = $agreement?->end_date ?? '';
                     $duration = $agreement?->duration ?? '';
@@ -87,35 +85,36 @@ class CustomerController extends Controller
                     return '
                         <div class="d-flex">
                             <a id="editBtn"
-                            data-url="' . route('customers.update', $customer->id) . '"
-                            data-id="' . $customer->id . '"
-                            data-building="' . $customer->building_id . '"
-                            data-room_shop_id="' . $roomId . '"
-                            data-name="' . $customer->name . '"
-                            data-mobile_no="' . $customer->mobile_no . '"
-                            data-cnic="' . $customer->cnic . '"
-                            data-address="' . $customer->address . '"
-                            data-status="' . $customer->status . '"
-                            data-room_shop_no="' . $roomNo . '"
-                            data-start_date="' . $startDate . '"
-                            data-end_date="' . $endDate . '"
-                            data-duration="' . $duration . '"
-                            data-monthly_rent="' . $monthlyRent . '"
-                            data-witnesses=\'' . json_encode($customer->witnesses) . '\'
-                            href="javascript:void(0)"
-                            class="btn btn-primary shadow btn-sm sharp me-1"><i class="fas fa-pencil-alt"></i></a>
+                                data-url="' . route('customers.update', $customer->id) . '"
+                                data-id="' . $customer->id . '"
+                                data-building="' . $customer->building_id . '"
+                                data-room_shop_id=\'' . json_encode($roomIds) . '\'
+                                data-room_shop_no="' . implode(', ', $roomNos) . '"
+                                data-name="' . e($customer->name) . '"
+                                data-mobile_no="' . e($customer->mobile_no) . '"
+                                data-cnic="' . e($customer->cnic) . '"
+                                data-address="' . e($customer->address) . '"
+                                data-status="' . e($customer->status) . '"
+                                data-start_date="' . $startDate . '"
+                                data-end_date="' . $endDate . '"
+                                data-duration="' . $duration . '"
+                                data-monthly_rent="' . $monthlyRent . '"
+                                data-witnesses=\'' . json_encode($customer->witnesses) . '\'
+                                href="javascript:void(0)"
+                                class="btn btn-primary shadow btn-sm sharp me-1"><i class="fas fa-pencil-alt"></i></a>
 
                             <a href="javascript:void(0)"
-                            data-url="' . route('customers.destroy', $customer->id) . '"
-                            data-label="delete"
-                            data-id="' . $customer->id . '"
-                            data-table="customersTable"
-                            class="btn btn-danger shadow btn-sm sharp delete-record"
-                            style="margin-left:0.5rem;"
-                            title="Delete Record"><i class="fa fa-trash"></i></a>
+                                data-url="' . route('customers.destroy', $customer->id) . '"
+                                data-label="delete"
+                                data-id="' . $customer->id . '"
+                                data-table="customersTable"
+                                class="btn btn-danger shadow btn-sm sharp delete-record"
+                                style="margin-left:0.5rem;"
+                                title="Delete Record"><i class="fa fa-trash"></i></a>
                         </div>
                     ';
                 })
+
                 ->rawColumns(['status', 'actions'])
                 ->make(true);
         }
@@ -137,7 +136,8 @@ class CustomerController extends Controller
                 'status' => 'required|in:active,inactive',
 
                 // Agreement
-                'room_shop_id' => 'required|exists:room_shops,id',
+                'room_shop_id' => 'required|array|min:1',
+                'room_shop_id.*' => 'exists:room_shops,id',
                 'duration' => 'required|string',
                 'monthly_rent' => 'required|string',
                 'start_date' => 'required|date',
@@ -167,7 +167,7 @@ class CustomerController extends Controller
 
                 // Create Agreement
                 $customer->agreements()->create([
-                    'room_shop_id' => $request->room_shop_id,
+                    'room_shop_ids' => json_encode($request->room_shop_id),
                     'duration' => $request->duration,
                     'monthly_rent' => $request->monthly_rent,
                     'start_date' => $request->start_date,
@@ -208,7 +208,8 @@ class CustomerController extends Controller
                     'status' => 'required|in:active,inactive',
 
                     // Agreement fields
-                    'room_shop_id' => 'required|exists:room_shops,id',
+                    'room_shop_id' => 'required|array|min:1',
+                    'room_shop_id.*' => 'exists:room_shops,id',
                     'duration' => 'required|string',
                     'monthly_rent' => 'required|string',
                     'start_date' => 'required|date',
@@ -229,9 +230,15 @@ class CustomerController extends Controller
                     $customer = Customer::findOrFail($id);
                     $customer->update($request->only(['building_id', 'name', 'mobile_no', 'cnic', 'address', 'status']));
 
-                    // Update or create agreement
-                    $agreementData = $request->only(['room_shop_id', 'duration', 'monthly_rent', 'start_date', 'end_date']);
-                    $agreementData['status'] = 'active'; // Ensure status is active
+                            // Agreement handling with multiple room support
+                    $agreementData = [
+                        'room_shop_ids' => json_encode($request->room_shop_id),
+                        'duration' => $request->duration,
+                        'monthly_rent' => $request->monthly_rent,
+                        'start_date' => $request->start_date,
+                        'end_date' => $request->end_date,
+                        'status' => 'active',
+                    ];
 
                     if ($customer->agreements()->exists()) {
                         $agreement = $customer->agreements()->first();

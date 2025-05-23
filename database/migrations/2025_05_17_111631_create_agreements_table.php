@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('agreements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('room_shop_id')->constrained('room_shops')->onDelete('cascade');
+            $table->json('room_shop_ids');
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->string('duration');
             $table->string('monthly_rent');

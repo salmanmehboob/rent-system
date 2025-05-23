@@ -65,6 +65,7 @@ class TransactionController extends Controller
                             data-building="' . $transaction->building_id . '"
                             data-customer_id="' . $transaction->customer_id. '"
                             data-month="' . $transaction->month . '"
+                            data-year="' . $transaction->year . '"
                             data-rent_amount="' . $monthlyRent . '"
                             data-previous_dues="' . $transaction->previous_dues . '"
                             data-sub_total="' . $transaction->sub_total . '"
@@ -98,48 +99,71 @@ class TransactionController extends Controller
      /**
      * Store a newly created transaction in storage.
      */
-    public function store(Request $request)
+   public function store(Request $request)
     {
-
         if ($request->ajax()) {
- 
-
             $validatedData = $request->validate([
                 'building_id' => 'required|exists:buildings,id',
                 'customer_id' => 'required|exists:customers,id',
                 'month' => 'required|string',
+                'year' => 'required|integer',
                 'rent_amount' => 'required|string',
                 'previous_dues' => 'required|string',
                 'sub_total' => 'required|string',
                 'payable_amount' => 'required|string',
                 'current_dues' => 'required|string',
                 'status' => 'required|in:Unpaid,Paid,Partially Paid',
-              
             ]);
 
             try {
-                // Start a database transaction
-                DB::beginTransaction(); 
-                
-  
+                DB::beginTransaction();
 
-               // Create the transaction
-                 $transaction = Transaction::create($validatedData);
+                // Prevent duplicate transaction
+                $alreadyExists = Transaction::where('customer_id', $validatedData['customer_id'])
+                    ->where('month', $validatedData['month'])
+                    ->where('year', $validatedData['year'])
+                    ->exists();
 
-                // Commit the transaction
+                if ($alreadyExists) {
+                    return response()->json([
+                    'errors' => [ // <-- wrap global inside 'errors'
+                        'global' => [
+                            'Transaction for this customer in ' . $validatedData['month'] . ' ' . $validatedData['year'] . ' already exists.'
+                        ]
+                    ]
+                ], 422);
+
+                }
+
+                $agreement = Customer::find($validatedData['customer_id'])?->activeAgreement;
+
+                if (!$agreement) {
+                    return response()->json(['error' => 'No active agreement found for this customer.'], 422);
+                }
+
+                $validatedData['agreement_id'] = $agreement->id;
+
+                $transaction = Transaction::create($validatedData);
+
                 DB::commit();
 
+                return response()->json([
+                    'success' => 'Transaction created successfully.',
+                    'data' => $transaction
+                ], 201);
 
-                return response()->json(['success' =>  'transaction created successfully.', 'data' => $transaction], 201);
             } catch (\Exception $e) {
-                // Rollback the transaction on error
                 DB::rollBack();
-                return response()->json(['success' =>  'Failed to create transaction.', 'error' => $e->getMessage()], 500);
+                return response()->json([
+                    'success' => false,
+                    'error' => $e->getMessage()
+                ], 500);
             }
         }
 
         return response()->json(['success' => false, 'message' => 'Invalid request.'], 400);
     }
+
 
 
 
@@ -156,6 +180,7 @@ class TransactionController extends Controller
                 'building_id' => 'required|exists:buildings,id',
                 'customer_id' => 'required|exists:customers,id',
                 'month' => 'required|string',
+                'year' => 'required|integer',
                 'rent_amount' => 'required|string',
                 'previous_dues' => 'required|string',
                 'sub_total' => 'required|string',
@@ -221,15 +246,24 @@ class TransactionController extends Controller
             }
         });
 
-       $customers = $query->get()->filter(function ($customer) {
-          return $customer->activeAgreement; // Only keep customers with active agreements
+      $customers = $query->get()->filter(function ($customer) {
+         return $customer->activeAgreement;
         })->map(function ($customer) {
+            $agreement = $customer->activeAgreement;
+            $roomCount = $agreement && $agreement->room_shop_ids 
+                ? count(json_decode($agreement->room_shop_ids, true)) 
+                : 0;
+
+            $monthlyRent = $agreement ? $agreement->monthly_rent : 0;
+            $totalRent = $monthlyRent * $roomCount;
+
             return [
                 'id' => $customer->id,
                 'name' => $customer->name,
-                'rent_amount' => optional($customer->activeAgreement)->monthly_rent,
+                'rent_amount' => $totalRent,
             ];
-        })->values(); // Reset array keys
+        })->values();
+
 
 
         return response()->json($customers);

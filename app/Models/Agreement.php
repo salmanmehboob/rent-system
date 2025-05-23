@@ -10,7 +10,7 @@ class Agreement extends Model
     use HasFactory;
 
     protected $fillable = [
-        'room_shop_id',
+        'room_shop_ids',
         'customer_id',
         'duration',
         'monthly_rent',
@@ -20,9 +20,9 @@ class Agreement extends Model
     ];
 
 
-    public function room()
+    public function rooms()
     {
-        return $this->belongsTo(RoomShop::class, 'room_shop_id');
+        return RoomShop::whereIn('id', json_decode($this->room_shop_ids ?? '[]'))->get();
     }
 
     public function customer()
@@ -31,19 +31,25 @@ class Agreement extends Model
        
     }
 
+    // public function transactions()
+    // {
+    //     return $this->hasMany(Transaction::class);
+    // }
+
     protected static function booted()
     {
         static::created(function ($agreement) {
-            $agreement->room->update([
+            $roomIds = json_decode($agreement->room_shop_ids ?? '[]');
+            RoomShop::whereIn('id', $roomIds)->update([
                 'customer_id' => $agreement->customer_id,
                 'availability' => 0
             ]);
         });
 
         static::updated(function ($agreement) {
-            // When agreement is reactivated
             if ($agreement->isDirty('status') && $agreement->status == 'active') {
-                $agreement->room->update([
+                $roomIds = json_decode($agreement->room_shop_ids ?? '[]');
+                RoomShop::whereIn('id', $roomIds)->update([
                     'customer_id' => $agreement->customer_id,
                     'availability' => 0
                 ]);
@@ -51,12 +57,12 @@ class Agreement extends Model
         });
 
         static::deleting(function ($agreement) {
-            if ($agreement->room) {
-                $agreement->room->update([
-                    'customer_id' => null,
-                    'availability' => 1
-                ]);
-            }
+            $roomIds = json_decode($agreement->room_shop_ids ?? '[]');
+            RoomShop::whereIn('id', $roomIds)->update([
+                'customer_id' => null,
+                'availability' => 1
+            ]);
         });
+
     }
 }

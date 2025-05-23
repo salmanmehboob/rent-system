@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('customer_id')->constrained('customers');
             $table->foreignId('agreement_id')->constrained('agreements');
-            $table->foreignId('roomshop_id')->constrained('roomshops');
+            $table->foreignId('roomshop_id')->constrained('room_shops');
             $table->timestamps();
         });
     }

@@ -18,9 +18,10 @@
                 <h4>{{ $title}} Form</h4>
             </div>
             <div class="card-body">
+                <div id="formError" class="alert alert-danger d-none"></div>
                 <form class="ajax-form" id="transactionForm" data-table="transactionsTable" action="{{ route('transactions.store') }}" method="POST">
                     @csrf
-
+                <div id="formError" class="alert alert-danger d-none"></div>
                     <div class="row">
                         <div class="col-md-5 mx-5">
                             <div class="form-group mb-2">
@@ -31,6 +32,7 @@
                                         <option value="{{ $building->id }}">{{ $building->name }}</option>
                                     @endforeach
                                 </select>
+                                <span id="building_idError" class="text-danger"></span>
                             </div>
 
                          
@@ -42,6 +44,7 @@
                                         <option value="{{ $month }}">{{ $month }}</option>
                                     @endforeach
                                 </select>
+                                <span id="monthError" class="text-danger"></span>
                             </div>
 
                              <div class="form-group mb-2">
@@ -52,17 +55,20 @@
                                         <option value="{{ $year }}">{{ $year }}</option>
                                     @endfor
                                 </select>
+                                <span id="yearError" class="text-danger"></span>
                             </div>
 
 
                             <div class="form-group mb-2">
                                 <label for="date">Previous Dues <span class="text-danger">*</span></label>
                                 <input type="text" name="previous_dues" class="form-control" id="previous_dues" placeholder="enter any prvious dues">
+                                <span id="previous_duesError" class="text-danger"></span>
                             </div>
 
                             <div class="form-group mb-2">
                                 <label for="date">Payable Amount <span class="text-danger">*</span></label>
                                 <input type="text" name="payable_amount" class="form-control" id="payable_amount" placeholder="enter payment to be paid now">
+                                <span id="payable_amountError" class="text-danger"></span>
                             </div>
 
                         </div>
@@ -74,32 +80,37 @@
                                     <!-- This will be filled dynamically with customer based on selected building -->
                                     <option value="">Select Customer</option>
                                 </select>
+                                <span id="customer_idError" class="text-danger"></span>
                             </div>
 
 
                             <div class="form-group mb-2">
                                 <label for="rent_amount">Rent Amount <span class="text-danger">*</span></label>
                                 <input type="text" name="rent_amount" class="form-control" id="rent_amount" readonly>
+                                <span id="rent-amountError" class="text-danger"></span>
                             </div>
 
                             <div class="form-group mb-2">
                                 <label for="address">Sub Total<span class="text-danger">*</span></label>
                                 <input type="text" name="sub_total" class="form-control" id="sub_total" readonly>
+                                <span id="total_totalError" class="text-danger"></span>
                             </div>
 
                             <div class="form-group mb-2">
                                 <label for="address">Current Dues<span class="text-danger">*</span></label>
                                 <input type="text" name="current_dues" class="form-control" id="current_dues" readonly>
+                                <span id="current_duesError" class="text-danger"></span>
                             </div>
 
                             <div class="form-group mb-2">
                                 <Label for="status">Payment Status <span class="text-danger">*</span></Label>
-                                <select name="status" class="form-control  select2">
+                                <select name="status" id="status" class="form-control  select2">
                                     <option value="">select status</option>
                                     <option value="Paid">Paid</option>
                                     <option value="Upaid">Unpaid</option>
                                     <option value="Partially Paid">Partially Paid</option>
                                 </select>
+                                <span id="statusError" class="text-danger"></span>
                             </div>
                         </div>
                    </div>
@@ -130,6 +141,7 @@
                                 <th>Building</th>
                                 <th>Customer</th>
                                 <th>Month</th>
+                                <th>Year</th>
                                 <th>Rent Amount</th>
                                 <th>Previous Dues</th>
                                 <th>Sub Total</th>
@@ -240,6 +252,7 @@
                 { data: 'building', name: 'building' },
                 { data: 'customer', name: 'customer' },
                 { data: 'month', name: 'month' },
+                { data: 'year', name: 'year' },
                 { data: 'rent_amount', name: 'rent_amount' },
                 { data: 'previous_dues', name: 'previous_dues' },
                 { data: 'sub_total', name: 'sub_total' },
@@ -259,7 +272,8 @@
             $form.append('<input type="hidden" name="_method" value="PUT">');
 
             // Populate form
-            $form.find('input[name="month"]').val($(this).data('month'));
+            $form.find('select[name="month"]').val($(this).data('month')).trigger('change');
+            $form.find('select[name="year"]').val($(this).data('year')).trigger('change');
             $form.find('input[name="rent_amount"]').val($(this).data('rent_amount'));
             $form.find('input[name="previous_dues"]').val($(this).data('previous_dues'));
             $form.find('input[name="sub_total"]').val($(this).data('sub_total'));

@@ -309,23 +309,54 @@ $(document).ready(function () {
                 // Reset submit button state
                 submitBtn.prop('disabled', false).text('Save');
             },
-            error: function (xhr) {
-                submitBtn.prop('disabled', false);
+            // error: function (xhr) {
+            //     $(".text-danger").html(""); // clear previous errors
+            //     $("#formError").addClass("d-none").html(""); // clear global error
+
+            //     if (xhr.status === 422) {
+            //         const response = xhr.responseJSON;
+
+            //         // Field-specific errors
+            //         if (response.errors) {
+            //             $.each(response.errors, function (key, messages) {
+            //                 form.find(`#${key}Error`).text(messages[0]);
+            //             });
+            //         }
+
+            //         // Special global message check
+            //         if (response.global) {
+            //             $("#formError").removeClass("d-none").html(response.global[0]);
+            //         }
+            //     } else {
+            //         errorContainer.removeClass('d-none').text('An unexpected error occurred.');
+            //     }
+            // }
+
+           error: function (xhr) {
+                $(".text-danger").html(""); // clear previous errors
+                $("#formError").addClass("d-none").html(""); // clear global error
+
+                // Re-enable submit button
+                submitBtn.prop('disabled', false).text('Save'); // ✅ add this
 
                 if (xhr.status === 422) {
-                    var errors = xhr.responseJSON.errors;
-                    $.each(errors, function (key, message) {
-                        form.find(`#${key}Error`).text(message[0]);
+                    let errors = xhr.responseJSON.errors;
+
+                    // Field-specific errors
+                    $.each(errors, function (key, value) {
+                        $("#" + key + "Error").html(value[0]);
                     });
+
+                    // Special global message check
+                    if (errors.global) {
+                        $("#formError").removeClass("d-none").html(errors.global[0]);
+                    }
                 } else {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: 'Something went wrong. Please try again later.',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
+                    // General error fallback
+                    $("#formError").removeClass("d-none").html("An unexpected error occurred.");
                 }
             }
+
         });
     });
 

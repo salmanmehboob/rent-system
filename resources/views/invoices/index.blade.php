@@ -83,7 +83,7 @@
     <strong>Customer Name:</strong> {{ $transaction->customer->name }}<br>
     <strong>Contact:</strong> {{ $transaction->customer->mobile_no }}<br>
     <strong>Shop/Room:</strong>
-    @foreach($transaction->customer->rooms as $room)
+    @foreach($transaction->customer->rooms() as $room)
     {{ $room->no }}{{ !$loop->last ? ',' : '' }}
     @endforeach <br>
     <strong>Date:</strong> {{ \Carbon\Carbon::parse($transaction->created_at)->format("d-M-Y") }}
@@ -92,7 +92,7 @@
   <table class="line-table">
     <tr>
       <th>Month</th>
-      <td>{{ $transaction->month }}</td>
+      <td>{{ $transaction->month }}-{{ $transaction->year }}</td>
     </tr>
     <tr>
       <th>Monthly Rent</th>

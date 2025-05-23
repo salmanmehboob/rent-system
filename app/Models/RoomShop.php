@@ -61,12 +61,12 @@ class RoomShop extends Model
         });
     } 
 
-    public function scopeAvailable($query)
+   public function scopeAvailable($query)
     {
-        return $query->where('availability', 1)->whereNull('customer_id')->whereDoesntHave('agreement', function($q) {
-            $q->where('status', 'active');
-        });
+        return $query->where('availability', 1)
+            ->whereNull('customer_id');
     }
+
 
     
 }

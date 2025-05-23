@@ -12,6 +12,7 @@ class Transaction extends Model
     protected $fillable = [
         'building_id',
         'customer_id',
+        'agreement_id',
         'year',
         'month',
         'rent_amount',
@@ -32,4 +33,9 @@ class Transaction extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+
+    // public function agreement()
+    // {
+    //     return $this->belongsTo(Agreement::class);
+    // }
 }
