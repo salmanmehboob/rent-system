@@ -159,6 +159,11 @@ $(document).ready(function () {
         $('.select2').select2({
             placeholder: "Select Option"
         });
+
+       $('.select2-multiple').select2({
+    placeholder: "Select Option",
+    allowClear: true
+});
     } else {
         console.error('Select2 is not loaded.');
     }

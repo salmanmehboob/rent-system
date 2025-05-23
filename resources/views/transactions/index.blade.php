@@ -2,7 +2,15 @@
 @section('title', $title)
 
 @section('content')
+@php
+    $months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    $currentYear = now()->year;
+    $startYear = $currentYear - 20;
 
+@endphp
 <div class="row">
     <div class="col-md-10 mx-5">
         <div class="card">
@@ -25,18 +33,27 @@
                                 </select>
                             </div>
 
+                         
                             <div class="form-group mb-2">
-                                <label>Customer <span class="text-danger">*</span></label>
-                                <select name="customer_id" class="form-control select2" id="customer_id">
-                                    <!-- This will be filled dynamically with customer based on selected building -->
-                                    <option value="">Select Customer</option>
+                                <label for="month">Month <span class="text-danger">*</span></label>
+                                <select name="month" id="month" class="form-control select2">
+                                    <option value="">select month</option>
+                                    @foreach ($months as $month)
+                                        <option value="{{ $month }}">{{ $month }}</option>
+                                    @endforeach
                                 </select>
                             </div>
 
-                            <div class="form-group mb-2">
-                                <label for="month">Month <span class="text-danger">*</span></label>
-                                <input type="date" name="month" class="form-control" id="date" placeholder="select month">
+                             <div class="form-group mb-2">
+                                <label for="year">Year <span class="text-danger">*</span></label>
+                                <select name="year" id="year" class="form-control select2">
+                                    <option value="" >select Year</option>
+                                    @for ($year=$currentYear; $year>= $startYear; $year--)
+                                        <option value="{{ $year }}">{{ $year }}</option>
+                                    @endfor
+                                </select>
                             </div>
+
 
                             <div class="form-group mb-2">
                                 <label for="date">Previous Dues <span class="text-danger">*</span></label>
@@ -51,6 +68,15 @@
                         </div>
 
                         <div class="col-md-5">
+                            <div class="form-group mb-2">
+                                <label>Customer <span class="text-danger">*</span></label>
+                                <select name="customer_id" class="form-control select2" id="customer_id">
+                                    <!-- This will be filled dynamically with customer based on selected building -->
+                                    <option value="">Select Customer</option>
+                                </select>
+                            </div>
+
+
                             <div class="form-group mb-2">
                                 <label for="rent_amount">Rent Amount <span class="text-danger">*</span></label>
                                 <input type="text" name="rent_amount" class="form-control" id="rent_amount" readonly>
@@ -68,8 +94,9 @@
 
                             <div class="form-group mb-2">
                                 <Label for="status">Payment Status <span class="text-danger">*</span></Label>
-                                <select name="status" class="form-control single-select-placeholder select2">
-                                    <option value="Paid" selected>Paid</option>
+                                <select name="status" class="form-control  select2">
+                                    <option value="">select status</option>
+                                    <option value="Paid">Paid</option>
                                     <option value="Upaid">Unpaid</option>
                                     <option value="Partially Paid">Partially Paid</option>
                                 </select>
@@ -154,28 +181,15 @@
             success: function(data) {
                 const $select = $(`#${childSelectId}`);
                 let options = `<option value="">${defaultText}</option>`;
-                const rentMap = {};
+              
 
                 data.forEach(item => {
-                    rentMap[item.id] = item.rent_amount;
-                    const isSelected = (selectedId == item.id) ? 'selected' : '';
-                    options += `<option value="${item.id}" ${isSelected}>${item.name}</option>`;
+                 
+                    options += `<option data-rent="${item.rent_amount}" value="${item.id}">${item.name}</option>`;
                 });
 
                 $select.html(options);
                 
-                // Set the value and trigger change if we have a selected ID
-                if (selectedId) {
-                    $select.val(selectedId).trigger('change');
-                    $('#rent_amount').val(rentMap[selectedId] || '');
-                }
-
-                // Customer change handler
-                $select.off('change').on('change', function() {
-                    const selectedCustomerId = $(this).val();
-                    $('#rent_amount').val(rentMap[selectedCustomerId] || '');
-                });
-
                 // Refresh Select2 if it exists
                 if ($select.hasClass('select2-hidden-accessible')) {
                     $select.trigger('change.select2');
@@ -186,6 +200,14 @@
             }
         });
     }
+
+
+    $('#customer_id').on('change', function () {
+        const selectedOption = $(this).find('option:selected'); // get selected <option>
+        const rent = selectedOption.data('rent');               // get data-rent from it
+        $('#rent_amount').val(rent ||0);
+    });
+
 
 
       //caculate subtotal on rent amount and previous dues

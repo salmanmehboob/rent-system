@@ -6,6 +6,7 @@ use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\RoomShopController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\InvoiceController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -60,6 +61,9 @@ Route::middleware('auth')->group( function() {
     });
     // picks rooms or shops by selected building
     Route::get('/customer-by-building', [TransactionController::class, 'getByBuilding']);
+
+    // route for print invoice
+    Route::get('invoice/{id}/print',[InvoiceController::class, 'printInvoice'])->name('invoice');
 
 
 });

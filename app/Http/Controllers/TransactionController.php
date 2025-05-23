@@ -13,10 +13,11 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $title = "Transactions";
+        $title = "Recipts";
         $buildings = Building::orderBy('name', 'asc')->get();
 
         if ($request->ajax()) {
+            
             // Proper eager loading
            $transactions = Transaction::with(['building', 'customer.activeAgreement'])->get();
             return DataTables()->of($transactions)
@@ -52,6 +53,12 @@ class TransactionController extends Controller
 
                     return '
                         <div class="d-flex">
+                        
+                            <a href="' . route('invoice', $transaction->id) . '"
+                            target="_blank"
+                            class="btn btn-secondary shadow btn-sm sharp mx-2"
+                            title="Print Transaction"><i class="fa fa-print"></i></a>
+
                             <a id="editBtn"
                             data-url="' . route('transactions.update', $transaction->id) . '"
                             data-id="' . $transaction->id . '"
@@ -95,11 +102,60 @@ class TransactionController extends Controller
     {
 
         if ($request->ajax()) {
+ 
 
             $validatedData = $request->validate([
                 'building_id' => 'required|exists:buildings,id',
                 'customer_id' => 'required|exists:customers,id',
-                'month' => 'required|date',
+                'month' => 'required|string',
+                'rent_amount' => 'required|string',
+                'previous_dues' => 'required|string',
+                'sub_total' => 'required|string',
+                'payable_amount' => 'required|string',
+                'current_dues' => 'required|string',
+                'status' => 'required|in:Unpaid,Paid,Partially Paid',
+              
+            ]);
+
+            try {
+                // Start a database transaction
+                DB::beginTransaction(); 
+                
+  
+
+               // Create the transaction
+                 $transaction = Transaction::create($validatedData);
+
+                // Commit the transaction
+                DB::commit();
+
+
+                return response()->json(['success' =>  'transaction created successfully.', 'data' => $transaction], 201);
+            } catch (\Exception $e) {
+                // Rollback the transaction on error
+                DB::rollBack();
+                return response()->json(['success' =>  'Failed to create transaction.', 'error' => $e->getMessage()], 500);
+            }
+        }
+
+        return response()->json(['success' => false, 'message' => 'Invalid request.'], 400);
+    }
+
+
+
+      /**
+     * update an existing transaction .
+     */
+    public function update(Request $request, $id)
+    {
+
+        if ($request->ajax()) {
+ 
+
+            $validatedData = $request->validate([
+                'building_id' => 'required|exists:buildings,id',
+                'customer_id' => 'required|exists:customers,id',
+                'month' => 'required|string',
                 'rent_amount' => 'required|string',
                 'previous_dues' => 'required|string',
                 'sub_total' => 'required|string',
@@ -113,18 +169,19 @@ class TransactionController extends Controller
                 // Start a database transaction
                 DB::beginTransaction(); 
 
-              // Create the transaction
-                 $transaction = Transaction::create($validatedData);
+                $transaction = transaction::findorFail($id);
+               // now update the transaction
+                 $transaction->update($validatedData);
 
                 // Commit the transaction
                 DB::commit();
 
 
-                return response()->json(['success' =>  'transaction created successfully.', 'data' => $transaction], 201);
+                return response()->json(['success' =>  'transaction updated successfully.', 'data' => $transaction], 201);
             } catch (\Exception $e) {
                 // Rollback the transaction on error
                 DB::rollBack();
-                return response()->json(['success' =>  'Failed to create room/transaction.', 'error' => $e->getMessage()], 500);
+                return response()->json(['success' =>  'Failed to update transaction.', 'error' => $e->getMessage()], 500);
             }
         }
 
@@ -132,6 +189,18 @@ class TransactionController extends Controller
     }
 
 
+   public function destroy($id)
+    {
+    
+        try {
+            $transaction=Transaction::findorFail($id);
+            $transaction->delete();
+            return response()->json(['success' => 'transaction deleted successfully.']);
+        } catch (\Exception $e) {
+           return response()->json(['error' => 'Failed to delete transaction.', 'message' => $e->getMessage()], 500);
+
+        }
+    }
 
 
 
@@ -152,13 +221,16 @@ class TransactionController extends Controller
             }
         });
 
-        $customers = $query->get()->map(function ($customer) {
+       $customers = $query->get()->filter(function ($customer) {
+          return $customer->activeAgreement; // Only keep customers with active agreements
+        })->map(function ($customer) {
             return [
                 'id' => $customer->id,
                 'name' => $customer->name,
-                'rent_amount' => $customer->activeAgreement->monthly_rent,
+                'rent_amount' => optional($customer->activeAgreement)->monthly_rent,
             ];
-        });
+        })->values(); // Reset array keys
+
 
         return response()->json($customers);
     }

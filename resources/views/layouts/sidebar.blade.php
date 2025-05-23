@@ -51,7 +51,7 @@
             <li class="nav-item {{ Route::is('transactions.index') ? 'active' : '' }}">
                 <a class="nav-link {{ Route::is('transactions.index') ? 'active' : '' }}" href="{{ route('transactions.index') }}">
                     <i class="fas fa-fw fa-table"></i>
-                    <span>Payment Transactions</span></a>
+                    <span>Payment Recipts</span></a>
             </li>
 
                    <!-- Divider -->

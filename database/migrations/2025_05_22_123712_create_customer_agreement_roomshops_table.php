@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('room_shops', function (Blueprint $table) {
+        Schema::create('customer_agreement_roomshops', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('building_id')->constrained('buildings')->onDelete('cascade');
-            $table->foreignId('customer_id')->constrained('customers')->nullable();
-            $table->string('type');
-            $table->string('no');
-            $table->boolean('availability')->default(1);
+            $table->foreignId('customer_id')->constrained('customers');
+            $table->foreignId('agreement_id')->constrained('agreements');
+            $table->foreignId('roomshop_id')->constrained('roomshops');
             $table->timestamps();
         });
     }
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('room_shops');
+        Schema::dropIfExists('customer_agreement_roomshops');
     }
 };

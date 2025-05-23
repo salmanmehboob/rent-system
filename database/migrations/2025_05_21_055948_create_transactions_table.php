@@ -13,9 +13,11 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('building_id')->constrained();
-            $table->foreignId('customer_id')->constrained();
-            $table->date('month');
+            $table->foreignId('building_id')->constrained('buildings');
+            $table->foreignId('customer_id')->constrained('customers');
+            $table->foreignId('agreement_id')->constrained('agreements');
+            $table->integer('year');
+            $table->string('month');
             $table->string('rent_amount');
             $table->string('previous_dues');
             $table->string('sub_total');

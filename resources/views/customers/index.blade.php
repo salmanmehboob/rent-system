@@ -2,7 +2,6 @@
 @section('title', $title)
 
 @section('content')
-
 <div class="row">
     <div class="col-md-10 mx-5">
         <div class="card">
@@ -48,11 +47,7 @@
                         </div>
 
                         <div class="form-group mb-2">
-                            <Label for="status">Status: <span class="text-danger">*</span></Label>
-                            <select name="status" class="form-control single-select-placeholder select2">
-                                <option value="active" selected>Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
+                          <input type="hidden" name="status" id="status"> 
                         </div>
                    </div>
                   </div>
@@ -64,9 +59,9 @@
                         <div class="col-md-5 mx-5">
                             <div class="form-group mb-2">
                                 <label>Room/Shop No: <span class="text-danger">*</span></label>
-                                <select name="room_shop_id" class="form-control select2" id="room_shop_id">
+                                <select name="room_shop_id[]" class="form-control select2-multiple" multiple id="room_shop_id">
                                     <!-- This will be filled dynamically with rooms based on selected building -->
-                                    <option value="">Select Room or Shop</option>
+                                   {{-- / <option value="">Select Room or Shop</option> --}}
                                 </select>
                             </div>
 

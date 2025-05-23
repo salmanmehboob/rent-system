@@ -1,16 +1,16 @@
-    
-<!--select2 menu-->
-<link rel="stylesheet" href="{{asset('assets/vendor/select2/css/select2.min.css')}}">
-<link rel="stylesheet" href="{{ asset('assets/vendor/bootstrap-select/dist/css/bootstrap-select.min.css')  }}">
-
-
-
-    <link href="{{ asset('assets/googlefonts/googlefonts.css') }}" rel="stylesheet">
+ <link href="{{ asset('assets/googlefonts/googlefonts.css') }}" rel="stylesheet">
 
     <!-- Custom fonts for this template-->
     <link href="{{ asset('assets/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
     <!-- Custom styles for this template-->
     <link href="{{ asset('assets/css/sb-admin-2.min.css') }}" rel="stylesheet">
+
+        
+<!--select2 menu-->
+<link rel="stylesheet" href="{{asset('assets/vendor/select2/css/select2.min.css')}}">
+<link rel="stylesheet" href="{{ asset('assets/vendor/bootstrap-select/dist/css/bootstrap-select.min.css')  }}">
+
+
     <!-- custom css -->
     <link href="{{ asset('assets/css/custom.css') }}" rel="stylesheet">
 

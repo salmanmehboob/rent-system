@@ -23,8 +23,8 @@
 
 
      <!-- select2 -->
- <script src="{{ asset('assets/vendor/bootstrap-select/dist/js/bootstrap-select.min.js')  }}"></script>
- <script src="{{ asset('assets/vendor/select2/js/select2.min.js')  }}"></script>
+ 
+ <script src="{{ asset('assets/vendor/select2/js/select2.min.js')  }}"></script> --}}
 
 
  <!-- Toastr -->
