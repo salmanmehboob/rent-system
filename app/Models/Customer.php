@@ -24,21 +24,28 @@ class Customer extends Model
        
     }
 
-
     public function rooms()
     {
-        $roomIds = $this->agreements()
-            ->where('status', 'active')
-            ->pluck('room_shop_ids')
-            ->filter()
-            ->flatMap(function ($json) {
-                return json_decode($json, true);
-            })->unique()->values();
-
-        return RoomShop::whereIn('id', $roomIds)
-            ->where('availability', 0)
-            ->get();
+        return RoomShop::whereHas('agreements', function ($q) {
+            $q->where('customer_id', $this->id)->where('status', 'active');
+        })->get();
     }
+
+
+    // public function rooms()
+    // {
+    //     $roomIds = $this->agreements()
+    //         ->where('status', 'active')
+    //         ->pluck('room_shop_ids')
+    //         ->filter()
+    //         ->flatMap(function ($json) {
+    //             return json_decode($json, true);
+    //         })->unique()->values();
+
+    //     return RoomShop::whereIn('id', $roomIds)
+    //         ->where('availability', 0)
+    //         ->get();
+    // }
 
 
     public function agreements()
@@ -47,15 +54,15 @@ class Customer extends Model
        
     }
 
-    public function activeAgreement()
-    {
-        return $this->hasOne(Agreement::class)->where('status', 'active');
-    }
+    // public function activeAgreement()
+    // {
+    //     return $this->hasOne(Agreement::class)->where('status', 'active');
+    // }
 
 
     public function witnesses()
     {
-        return $this->hasMany(Witness::class);
+        return $this->belongsToMany(Witness::class, 'customer_witness');
        
     }
 
@@ -67,14 +74,20 @@ class Customer extends Model
     protected static function booted()
     {
         static::deleting(function ($customer) {
-            // Reset all rooms assigned to this customer
+            // Deactivate their agreements
+            foreach ($customer->agreements as $agreement) {
+                $agreement->update(['status' => 'inactive']);
+            }
+
+            // Free rooms
             foreach ($customer->rooms() as $room) {
                 $room->update([
                     'customer_id' => null,
-                    'availability' => 1 // Available
+                    'availability' => 1
                 ]);
             }
         });
     }
+
 
 }

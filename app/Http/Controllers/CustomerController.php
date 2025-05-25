@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Building;
 use App\Models\RoomShop;
+use App\Models\Witness;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -18,8 +19,14 @@ class CustomerController extends Controller
 
         if ($request->ajax()) {
             // Proper eager loading
-              $customers = Customer::with(['building','agreements' => function($query) 
-              {$query->where('status', 'active');},'witnesses'])->get();
+                $customers = Customer::with([
+                    'building',
+                    'agreements' => function ($query) {
+                        $query->where('status', 'active')->latest(); // <- add this
+                    },
+                    'witnesses'
+                ])->get();
+
 
             return DataTables()->of($customers)
                 ->addColumn('building_name', function ($customer) {
@@ -33,12 +40,8 @@ class CustomerController extends Controller
                 // Agreement section (get first agreement only)
                 ->addColumn('room_shop_no', function ($customer) {
                     $agreement = $customer->agreements->first();
-                    if (!$agreement || !$agreement->room_shop_ids) {
-                        return 'N/A';
-                    }
-
-                    $roomIds = json_decode($agreement->room_shop_ids, true);
-                    $roomNos = RoomShop::whereIn('id', $roomIds)->pluck('no')->toArray();
+                   
+                    $roomNos = $agreement->roomShops->pluck('no')->toArray();
 
                     return implode(', ', $roomNos);
                 })
@@ -73,8 +76,7 @@ class CustomerController extends Controller
                ->addColumn('actions', function ($customer) {
                     $agreement = $customer->agreements->first();
 
-                    $roomIds = json_decode($agreement?->room_shop_ids ?? '[]');
-                    $roomNos = RoomShop::whereIn('id', $roomIds)->pluck('no')->toArray();
+                    $roomNos = $agreement->roomShops->pluck('no')->toArray();
 
                     $startDate = $agreement?->start_date ?? '';
                     $endDate = $agreement?->end_date ?? '';
@@ -88,7 +90,7 @@ class CustomerController extends Controller
                                 data-url="' . route('customers.update', $customer->id) . '"
                                 data-id="' . $customer->id . '"
                                 data-building="' . $customer->building_id . '"
-                                data-room_shop_id=\'' . json_encode($roomIds) . '\'
+                                data-room_shop_id=\'' . json_encode($agreement?->roomShops->pluck('id')->toArray() ?? []) . '\'
                                 data-room_shop_no="' . implode(', ', $roomNos) . '"
                                 data-name="' . e($customer->name) . '"
                                 data-mobile_no="' . e($customer->mobile_no) . '"
@@ -155,6 +157,7 @@ class CustomerController extends Controller
             try {
                 DB::beginTransaction();
 
+                    
                 // Create Customer
                 $customer = Customer::create([
                     'building_id' => $request->building_id,
@@ -165,19 +168,41 @@ class CustomerController extends Controller
                     'status' => $request->status,
                 ]);
 
-                // Create Agreement
-                $customer->agreements()->create([
-                    'room_shop_ids' => json_encode($request->room_shop_id),
+                // Create Agreement and get the instance
+                $agreement = $customer->agreements()->create([
                     'duration' => $request->duration,
                     'monthly_rent' => $request->monthly_rent,
                     'start_date' => $request->start_date,
                     'end_date' => $request->end_date,
+                    'status' => 'active',
                 ]);
 
-                // Create Witnesses
-                foreach ($request->witnesses as $witness) {
-                    $customer->witnesses()->create($witness);
+                // Attach room shops to agreement and update availability
+                $agreement->roomShops()->attach($request->room_shop_id);
+
+                RoomShop::whereIn('id', $request->room_shop_id)->update([
+                    'customer_id' => $customer->id,
+                    'availability' => 0,
+                ]);
+
+                // Create or find witnesses, collect their IDs
+                $witnessIds = [];
+                foreach ($request->witnesses as $witnessData) {
+                    $witness = Witness::updateOrCreate(
+                        ['id' => $witnessData['id'] ?? null],
+                        [
+                            'name' => $witnessData['name'],
+                            'mobile_no' => $witnessData['mobile_no'],
+                            'cnic' => $witnessData['cnic'],
+                            'address' => $witnessData['address'],
+                        ]
+                    );
+                    $witnessIds[] = $witness->id;
                 }
+
+                // Attach witnesses to customer and agreement (assuming many-to-many)
+                $customer->witnesses()->sync($witnessIds);
+                $agreement->witnesses()->sync($witnessIds);
 
                 DB::commit();
                 return response()->json(['success' => 'Customer added successfully.'], 200);
@@ -228,11 +253,14 @@ class CustomerController extends Controller
                     DB::beginTransaction();
                             
                     $customer = Customer::findOrFail($id);
+
+                    // Update customer
                     $customer->update($request->only(['building_id', 'name', 'mobile_no', 'cnic', 'address', 'status']));
 
-                            // Agreement handling with multiple room support
+                    // Get existing agreement or create new
+                    $agreement = $customer->agreements()->first();
+
                     $agreementData = [
-                        'room_shop_ids' => json_encode($request->room_shop_id),
                         'duration' => $request->duration,
                         'monthly_rent' => $request->monthly_rent,
                         'start_date' => $request->start_date,
@@ -240,18 +268,47 @@ class CustomerController extends Controller
                         'status' => 'active',
                     ];
 
-                    if ($customer->agreements()->exists()) {
-                        $agreement = $customer->agreements()->first();
+                    if ($agreement) {
                         $agreement->update($agreementData);
+
+                        // Detach old room shops from agreement and reset their availability/customer_id
+                        $oldRoomShopIds = $agreement->roomShops()->pluck('id')->toArray();
+                        $agreement->roomShops()->detach();
+
+                        RoomShop::whereIn('id', $oldRoomShopIds)->update([
+                            'customer_id' => null,
+                            'availability' => 1,
+                        ]);
                     } else {
-                        $customer->agreements()->create($agreementData);
+                        $agreement = $customer->agreements()->create($agreementData);
                     }
 
-                    // Update witnesses
-                    $customer->witnesses()->delete();
-                    foreach ($request->witnesses as $witness) {
-                        $customer->witnesses()->create($witness);
+                    // Attach new room shops
+                    $agreement->roomShops()->sync($request->room_shop_id);
+
+                    // Update RoomShop availability and customer_id
+                    RoomShop::whereIn('id', $request->room_shop_id)->update([
+                        'customer_id' => $customer->id,
+                        'availability' => 0,
+                    ]);
+
+                    // Witnesses handling: Sync instead of deleting all to preserve others if needed
+                    $witnessIds = [];
+                    foreach ($request->witnesses as $witnessData) {
+                        $witness = Witness::updateOrCreate(
+                            ['id' => $witnessData['id'] ?? null],
+                            [
+                                'name' => $witnessData['name'],
+                                'mobile_no' => $witnessData['mobile_no'],
+                                'cnic' => $witnessData['cnic'],
+                                'address' => $witnessData['address'],
+                            ]
+                        );
+                        $witnessIds[] = $witness->id;
                     }
+
+                    $customer->witnesses()->sync($witnessIds);
+                    $agreement->witnesses()->sync($witnessIds);
 
                     DB::commit();
                     return response()->json(['success' => 'Customer updated successfully.'], 200);

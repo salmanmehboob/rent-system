@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('witnesses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->string('name');
             $table->string('mobile_no');
             $table->string('cnic');

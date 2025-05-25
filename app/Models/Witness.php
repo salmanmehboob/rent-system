@@ -23,8 +23,15 @@ class Witness extends Model
       return $this->hasMany(RoomShop::class);
    }
 
-    public function customer()
+    public function customers()
    {
-      return $this->belongsTo(Customer::class);
+      return $this->belongsToMany(Customer::class,'customer_witness');
    }
+
+   public function agreements()
+   {
+      return $this->belongsToMany(Agreement::class, 'agreement_witness')
+                  ->withTimestamps();
+   }
+
 }

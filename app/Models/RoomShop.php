@@ -25,41 +25,44 @@ class RoomShop extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function agreement()
+    // public function agreement()
+    // {
+    //     return $this->hasOne(Agreement::class);
+    // }
+
+    public function agreements()
     {
-        return $this->hasOne(Agreement::class);
+        return $this->belongsToMany(Agreement::class, 'agreement_room_shop');
     }
+
 
     protected static function booted()
     {
         static::updating(function ($roomshop) {
-            if ($roomshop->isDirty('availability')) {
-                // When making available
-                if ($roomshop->availability == 1) {
-                    $roomshop->customer_id = null;
-                    
-                    if ($roomshop->agreement) {
-                        // Don't set room_shop_id to null - instead:
-                        $roomshop->agreement->update([
-                            'status' => 'inactive',
-                            'end_date' => now()
-                            // Keep the room_shop_id value
-                        ]);
-                    }
+            if ($roomshop->isDirty('availability') && $roomshop->availability == 1) {
+                // Deactivate all agreements linked to this room
+                foreach ($roomshop->agreements as $agreement) {
+                    $agreement->update([
+                        'status' => 'inactive',
+                        'end_date' => now()
+                    ]);
                 }
-                // When making unavailable
-                else {
-                    if ($roomshop->agreement) {
-                        $roomshop->agreement->update([
-                            'status' => 'active',
-                            'start_date' => now()
-                        ]);
-                        $roomshop->customer_id = $roomshop->agreement->customer_id;
-                    }
-                }
+
+                $roomshop->customer_id = null;
             }
         });
-    } 
+
+        static::deleting(function ($roomshop) {
+            // Deactivate agreements
+            foreach ($roomshop->agreements as $agreement) {
+                $agreement->update([
+                    'status' => 'inactive',
+                    'end_date' => now()
+                ]);
+            }
+        });
+    }
+
 
    public function scopeAvailable($query)
     {

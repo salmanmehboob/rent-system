@@ -34,8 +34,8 @@ class Transaction extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    // public function agreement()
-    // {
-    //     return $this->belongsTo(Agreement::class);
-    // }
+    public function agreement()
+    {
+        return $this->belongsTo(Agreement::class);
+    }
 }

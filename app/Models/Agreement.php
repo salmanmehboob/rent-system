@@ -10,7 +10,6 @@ class Agreement extends Model
     use HasFactory;
 
     protected $fillable = [
-        'room_shop_ids',
         'customer_id',
         'duration',
         'monthly_rent',
@@ -20,15 +19,32 @@ class Agreement extends Model
     ];
 
 
-    public function rooms()
+    // public function rooms()
+    // {
+    //     return RoomShop::whereIn('id', json_decode($this->room_shop_ids ?? '[]'))->get();
+    // }
+
+    public function roomShops()
     {
-        return RoomShop::whereIn('id', json_decode($this->room_shop_ids ?? '[]'))->get();
+        return $this->belongsToMany(RoomShop::class, 'agreement_room_shop');
     }
+
 
     public function customer()
     {
         return $this->belongsTo(Customer::class);
        
+    }
+
+    public function witnesses()
+    {
+        return $this->belongsToMany(Witness::class, 'agreement_witness')
+                    ->withTimestamps();
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
     }
 
     // public function transactions()
@@ -39,30 +55,33 @@ class Agreement extends Model
     protected static function booted()
     {
         static::created(function ($agreement) {
-            $roomIds = json_decode($agreement->room_shop_ids ?? '[]');
-            RoomShop::whereIn('id', $roomIds)->update([
-                'customer_id' => $agreement->customer_id,
-                'availability' => 0
-            ]);
-        });
-
-        static::updated(function ($agreement) {
-            if ($agreement->isDirty('status') && $agreement->status == 'active') {
-                $roomIds = json_decode($agreement->room_shop_ids ?? '[]');
-                RoomShop::whereIn('id', $roomIds)->update([
+            foreach ($agreement->roomShops as $room) {
+                $room->update([
                     'customer_id' => $agreement->customer_id,
                     'availability' => 0
                 ]);
             }
         });
 
-        static::deleting(function ($agreement) {
-            $roomIds = json_decode($agreement->room_shop_ids ?? '[]');
-            RoomShop::whereIn('id', $roomIds)->update([
-                'customer_id' => null,
-                'availability' => 1
-            ]);
+        static::updating(function ($agreement) {
+            if ($agreement->isDirty('status') && $agreement->status === 'inactive') {
+                foreach ($agreement->roomShops as $room) {
+                    $room->update([
+                        'availability' => 1,
+                        'customer_id' => null
+                    ]);
+                }
+            }
         });
 
+        static::deleting(function ($agreement) {
+            foreach ($agreement->roomShops as $room) {
+                $room->update([
+                    'availability' => 1,
+                    'customer_id' => null
+                ]);
+            }
+        });
     }
+
 }

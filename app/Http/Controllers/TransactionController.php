@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use App\Models\Building;
 use App\Models\Customer;
+use App\Models\Agreement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -19,7 +20,7 @@ class TransactionController extends Controller
         if ($request->ajax()) {
             
             // Proper eager loading
-           $transactions = Transaction::with(['building', 'customer.activeAgreement'])->get();
+           $transactions = Transaction::with(['building', 'customer', 'agreement'])->get();
             return DataTables()->of($transactions)
                 ->addColumn('building', function ($transaction) {
                     return $transaction->building->name ?? 'N/A';
@@ -43,12 +44,12 @@ class TransactionController extends Controller
                 })
 
                 ->addColumn('rent_amount', function ($transaction) {
-                    return $transaction->customer->activeAgreement->monthly_rent ?? 'N/A';
+                    $monthlyRent = $transaction->agreement?->monthly_rent ?? 'N/A';
                 })
               
                 // Actions
               ->addColumn('actions', function ($transaction) {
-                    $agreement = $transaction->customer->activeAgreement;
+                    $agreement = $transaction->agreement;
                     $monthlyRent = $agreement?->monthly_rent ?? 'N/A';
 
                     return '
@@ -128,7 +129,7 @@ class TransactionController extends Controller
                     return response()->json([
                     'errors' => [ // <-- wrap global inside 'errors'
                         'global' => [
-                            'Transaction for this customer in ' . $validatedData['month'] . ' ' . $validatedData['year'] . ' already exists.'
+                            'Recipt for this customer in ' . $validatedData['month'] . ' ' . $validatedData['year'] . ' already exists.'
                         ]
                     ]
                 ], 422);
@@ -194,7 +195,7 @@ class TransactionController extends Controller
                 // Start a database transaction
                 DB::beginTransaction(); 
 
-                $transaction = transaction::findorFail($id);
+                $transaction = transaction::findOrFail($id);
                // now update the transaction
                  $transaction->update($validatedData);
 
@@ -202,7 +203,7 @@ class TransactionController extends Controller
                 DB::commit();
 
 
-                return response()->json(['success' =>  'transaction updated successfully.', 'data' => $transaction], 201);
+                return response()->json(['success' =>  'transaction updated successfully.', 'data' => $transaction], 200);
             } catch (\Exception $e) {
                 // Rollback the transaction on error
                 DB::rollBack();
@@ -218,7 +219,7 @@ class TransactionController extends Controller
     {
     
         try {
-            $transaction=Transaction::findorFail($id);
+            $transaction=Transaction::findOrFail($id);
             $transaction->delete();
             return response()->json(['success' => 'transaction deleted successfully.']);
         } catch (\Exception $e) {
@@ -232,45 +233,40 @@ class TransactionController extends Controller
 
 
    
-     public function getByBuilding(Request $request)
+    public function getByBuilding(Request $request)
     {
         $buildingId = $request->building_id;
         $customerId = $request->customer_id;
 
-        $query = Customer::where(function($q) use ($buildingId, $customerId) {
-            $q->where('building_id', $buildingId)
-            ->where('status', 'active');
-            
-            if ($customerId) {
-                $q->orWhere('id', $customerId);
-            }
-        });
+        // Get agreements that belong to customers in the building
+        $agreements = Agreement::with('customer')
+            ->whereHas('customer', function ($q) use ($buildingId, $customerId) {
+                $q->where('building_id', $buildingId)
+                ->where('status', 'active');
 
-      $customers = $query->get()->filter(function ($customer) {
-         return $customer->activeAgreement;
-        })->map(function ($customer) {
-            $agreement = $customer->activeAgreement;
-            $roomCount = $agreement && $agreement->room_shop_ids 
+                if ($customerId) {
+                    $q->orWhere('id', $customerId);
+                }
+            })
+            ->get();
+
+        $data = $agreements->map(function ($agreement) {
+            $roomCount = $agreement->room_shop_ids 
                 ? count(json_decode($agreement->room_shop_ids, true)) 
                 : 0;
 
-            $monthlyRent = $agreement ? $agreement->monthly_rent : 0;
+            $monthlyRent = $agreement->monthly_rent ?? 0;
             $totalRent = $monthlyRent * $roomCount;
 
             return [
-                'id' => $customer->id,
-                'name' => $customer->name,
+                'id' => $agreement->customer->id,
+                'name' => $agreement->customer->name,
                 'rent_amount' => $totalRent,
             ];
-        })->values();
+        });
 
-
-
-        return response()->json($customers);
+        return response()->json($data);
     }
-
-
-
 
 
 }
