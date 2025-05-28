@@ -14,12 +14,13 @@
 
                     <div class="form-group mb-2">
                         <label>Building  <span class="text-danger">*</span></label>
-                       <select name="building_id" class="form-control single-select-placehoder select2">
-                        <option value="" disabled selected> Select a Building </option>
-                        @foreach ($buildings as $building)
-                            <option value="{{ $building->id }}">{{ $building->name }}</option>
-                        @endforeach
-                       </select>
+                        <select name="building_id" class="form-control single-select-placehoder select2">
+                                <option value="" disabled selected> Select a Building </option>
+                            @foreach ($buildings as $building)
+                                <option value="{{ $building->id }}">{{ $building->name }}</option>
+                            @endforeach
+                        </select>
+                        <div id="building_idError" class="text-danger mt-1"></div>
                     </div>
 
                     <div class="form-group mb-2">
@@ -29,19 +30,23 @@
                             <option value="room">Room</option>
                             <option value="shop">Shop</option>
                         </select>
+                        <div id="typeError" class="text-danger mt-1"></div>
                     </div>
 
                     <div class="form-group mb-2">
                         <label>Availability <span class="text-danger">*</span></label>
-                        <select name="availability" class="form-control single-select-placeholder select2">
+                        <select name="availability" id="availability" class="form-control single-select-placeholder select2">
+                            <option value="">select option</option>
                             <option value="1">Available</option>
                             <option value="0" disabled>Unavailable</option>
                         </select>
+                        <div id="availabilityError" class="text-danger mt-1"></div>
                     </div>
 
                     <div class="form-group mb-2">
                         <label>Room/ Shop No <span class="text-danger">*</span></label>
-                        <input type="text" name="no" class="form-control" placeholder="room/shop no">
+                        <input type="text" name="no" id="no" class="form-control" placeholder="room/shop no">
+                        <div id="noError" class="text-danger mt-1"></div>
                     </div>
 
                     
@@ -58,6 +63,7 @@
                 <h6>{{ $title }} List</h6>
             </div>
             <div class="card-body">
+                <div id="formError" class="alert alert-danger d-none"></div>
                 <div class="table-responsive">
                     <table class="table table-bordered" id="roomshopsTable" width="100%" cellspacing="0">
                         <thead>

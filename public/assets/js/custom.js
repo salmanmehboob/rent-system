@@ -221,14 +221,39 @@ $(document).ready(function () {
                             });
                         }
                     },
-                    error: function (xhr) {
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'Something went wrong. Please try again later.',
-                            icon: 'error',
-                            confirmButtonText: 'OK'
-                        });
+                 error: function (xhr) {
+                        let message = 'Something went wrong. Please try again later.';
+                        let swalTitle = 'Error!';
+                        let swalIcon = 'error';
+
+                        if (xhr.status === 400 && xhr.responseJSON && xhr.responseJSON.errors && xhr.responseJSON.errors.global) {
+                            message = xhr.responseJSON.errors.global[0];
+                            // swalTitle = 'Warning!';
+                            // swalIcon = 'warning';
+                            // Also show in the form error div if needed
+                        $('#formError').removeClass('d-none').text(message);
+                        
+                        } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                            message = xhr.responseJSON.error;
+                             Swal.fire({
+                                title: swalTitle,
+                                text: message,
+                                icon: swalIcon,
+                                confirmButtonText: 'OK'
+                            });
+                        }
+
+                        // Swal.fire({
+                        //     title: swalTitle,
+                        //     text: message,
+                        //     icon: swalIcon,
+                        //     confirmButtonText: 'OK'
+                        // });
+
+                        
                     }
+
+
                 });
             }
         });

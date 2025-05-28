@@ -130,7 +130,7 @@ class RoomShopController extends Controller
                 DB::beginTransaction(); 
 
                 // Create the room/shop 
-                 $roomshop = RoomShop::find($id);
+                 $roomshop = RoomShop::findOrFail($id);
                  $roomshop->update($validated);
 
                 // Commit the transaction
@@ -153,7 +153,7 @@ class RoomShopController extends Controller
     {
     
         try {
-            $roomshop=RoomShop::findorFail($id);
+            $roomshop=RoomShop::findOrFail($id);
             $roomshop->delete();
             return response()->json(['success' => 'RoomShop deleted successfully.']);
         } catch (\Exception $e) {

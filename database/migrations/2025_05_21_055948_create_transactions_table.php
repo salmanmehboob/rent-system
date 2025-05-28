@@ -13,17 +13,13 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('building_id')->constrained('buildings');
-            $table->foreignId('customer_id')->constrained('customers');
-            $table->foreignId('agreement_id')->constrained('agreements');
+            $table->foreignId('invoice_id')->constrained('invoices');
             $table->integer('year');
             $table->string('month');
-            $table->string('rent_amount');
-            $table->string('previous_dues');
-            $table->string('sub_total');
-            $table->string('payable_amount');
-            $table->string('current_dues');
-            $table->enum('status', ['Paid','Unpaid','Partially Paid']);
+            $table->string('paid');
+            $table->string('dues');
+            $table->string('note');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

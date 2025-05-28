@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Building;
 use App\Models\RoomShop;
 use App\Models\Customer;
-use App\Models\Transaction;
+use App\Models\Invoice;
 
 use Illuminate\Http\Request;
 
@@ -31,8 +31,8 @@ class HomeController extends Controller
         $buildingsCount = Building::count();
         $roomhopsCount = RoomShop::count();
         $customersCount = Customer::count();
-        $transactionsCount = Transaction::count();
+        $invoicesCount = Invoice::count();
 
-        return view('home', compact('buildingsCount', 'roomhopsCount', 'customersCount', 'transactionsCount'));
+        return view('home', compact('buildingsCount', 'roomhopsCount', 'customersCount', 'invoicesCount'));
     }
 }

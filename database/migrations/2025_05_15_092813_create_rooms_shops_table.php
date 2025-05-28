@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('type');
             $table->string('no');
             $table->boolean('availability')->default(1);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

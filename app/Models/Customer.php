@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 class Customer extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'building_id', 
@@ -66,9 +68,9 @@ class Customer extends Model
        
     }
 
-    public function transations()
+    public function invoices()
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Invoice::class);
     }
 
     protected static function booted()

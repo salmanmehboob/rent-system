@@ -14,23 +14,26 @@
 
                     <div class="form-group mb-2">
                         <label>Building Name <span class="text-danger">*</span></label>
-                        <input type="text" name="name" id="buildingName" class="form-control" placeholder="Building Name">
+                        <input type="text" name="name" id="name" class="form-control" placeholder="Building Name">
                         <div id="nameError" class="text-danger mt-1"></div>
                     </div>
 
                     <div class="form-group mb-2">
                         <label>Address</label>
-                        <input type="text" name="address" class="form-control" placeholder="Address">
+                        <input type="text" name="address" id="address" class="form-control" placeholder="Address">
+                        <div id="addressError" class="text-danger mt-1"></div>
                     </div>
 
                     <div class="form-group mb-2">
                         <label>Contact Number</label>
-                        <input type="text" name="contact" class="form-control" placeholder="Contact Number">
+                        <input type="text" name="contact" id="contact" class="form-control" placeholder="Contact Number">
+                        <div id="contactError" class="text-danger mt-1"></div>
                     </div>
 
                     <div class="form-group mb-2">
                         <label>Contact Person</label>
-                        <input type="text" name="contact_person" class="form-control" placeholder="Contact Person">
+                        <input type="text" name="contact_person" id="contact_person" class="form-control" placeholder="Contact Person">
+                        <div id="contact_personError" class="text-danger mt-1"></div>
                     </div>
 
 

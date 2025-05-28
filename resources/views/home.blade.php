@@ -26,7 +26,7 @@
                                 <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $buildingsCount }}</div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                                <i class="fas fa-city fa-2x text-gray-300"></i>
                             </div>
                         </div>
                     </a>
@@ -46,7 +46,7 @@
                                 <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $roomhopsCount }}</div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                                <i class="fas fa-door-open fa-2x text-gray-300"></i>
                             </div>
                         </div>
                     </a>
@@ -66,7 +66,7 @@
                                 <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $customersCount }}</div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                                <i class="fas fa-user-tag fa-2x text-gray-300"></i>
                             </div>
                         </div>
                     </a>
@@ -77,16 +77,36 @@
               <!-- Transactions -->
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card border-left-primary shadow h-100 py-2">
-                    <a style="text-decoration:none;" href="{{ route('transactions.index') }}">
+                    <a style="text-decoration:none;" href="{{ route('invoices.index') }}">
                         <div class="card-body">
                         <div class="row no-gutters align-items-center">
                             <div class="col mr-2">
                                 <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                    Transactions</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $transactionsCount }}</div>
+                                    Invoices</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $invoicesCount }}</div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                                <i class="fas fa-file-invoice-dollar fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Bills -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <a style="text-decoration:none;" href="{{ route('bills') }}">
+                        <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Bills Gererated</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $invoicesCount }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-receipt fa-2x text-gray-300"></i>
                             </div>
                         </div>
                     </a>

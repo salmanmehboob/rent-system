@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('mobile_no');
             $table->string('cnic');
             $table->string('address');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('cnic')->nullable();
             $table->text('address')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

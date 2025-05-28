@@ -18,7 +18,8 @@ return new class extends Migration
             $table->string('monthly_rent');
             $table->date('start_date');
             $table->date('end_date');
-            $table->enum('status', ['active', 'inactive'])->default('active');            
+            $table->enum('status', ['active', 'inactive'])->default('active'); 
+            $table->softDeletes();           
             $table->timestamps();
         });
     }

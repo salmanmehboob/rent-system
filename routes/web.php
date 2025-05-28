@@ -5,8 +5,9 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\RoomShopController;
 use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PrintController;
+use App\Http\Controllers\ReportController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -52,18 +53,35 @@ Route::middleware('auth')->group( function() {
 
 
         //  transactions Routes 
-    Route::prefix('transactions')->name('transactions.')->group(function () {
-        Route::get('/', [TransactionController::class, 'index'])->name('index');  
-        Route::get('/{id}', [TransactionController::class, 'show'])->name('show');
-        Route::post('/', [TransactionController::class, 'store'])->name('store'); 
-        Route::put('/{id}', [TransactionController::class, 'update'])->name('update'); 
-        Route::delete('/{id}', [TransactionController::class, 'destroy'])->name('destroy'); 
+    Route::prefix('invoices')->name('invoices.')->group(function () {
+        Route::get('/', [InvoiceController::class, 'index'])->name('index');  
+        Route::get('/{id}', [InvoiceController::class, 'show'])->name('show');
+        Route::post('/', [InvoiceController::class, 'store'])->name('store'); 
+        Route::put('/{id}', [InvoiceController::class, 'update'])->name('update'); 
+        Route::delete('/{id}', [InvoiceController::class, 'destroy'])->name('destroy'); 
+        // generate all the bills by one click
+        Route::post('/all-bills', [InvoiceController::class, 'combine'])->name('combine');
+        Route::post('/{id}/transactions', [InvoiceController::class, 'getTransactions'])->name('transactions');
+        
     });
     // picks rooms or shops by selected building
-    Route::get('/customer-by-building', [TransactionController::class, 'getByBuilding']);
+    Route::get('/customer-by-building', [InvoiceController::class, 'getByBuilding']);
+
+    // generate all the bills by one click
+    Route::post('/combine-bills', [InvoiceController::class, 'combine']);
+
 
     // route for print invoice
-    Route::get('invoice/{id}/print',[InvoiceController::class, 'printInvoice'])->name('invoice');
+    Route::get('invoice/{id}/print',[PrintController::class, 'printInvoice'])->name('print');
+
+    // routes for reports
+    Route::prefix('reports')->group(function () {
+        Route::get('/customers', [ReportController::class, 'customerReports'])->name('reports.customers');
+        Route::get('/dues', [ReportController::class, 'duesReports'])->name('reports.dues');
+        Route::get('/buildings', [ReportController::class, 'buildingReports'])->name('reports.buildings');
+    });
 
 
+    // genertating bills view
+    Route::get('/total-bills', [InvoiceController::class, 'show'])->name('bills');
 });

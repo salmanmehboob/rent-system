@@ -12,14 +12,14 @@ class DeactivateExpiredAgreements extends Command
      *
      * @var string
      */
-    protected $signature = 'app:deactivate-expired-agreements';
+    protected $signature = 'check:agreements';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'check the customer agreement expiration.';
 
     /**
      * Execute the console command.

@@ -11,46 +11,51 @@
             <div class="card-body">
                 <form class="ajax-form" id="customerForm" data-table="customersTable" action="{{ route('customers.store') }}" method="POST">
                     @csrf
+ 
+                    <div class="row">
+                        <div class="col-md-5 mx-5">
+                            <div class="form-group mb-2">
+                                <label>Building  <span class="text-danger">*</span></label>
+                                <select name="building_id" id="building_id" class=" form-control single-select-placehoder select2">
+                                    <option value="" disabled selected> Select a Building </option>
+                                    @foreach ($buildings as $building)
+                                        <option value="{{ $building->id }}">{{ $building->name }}</option>
+                                    @endforeach
+                                </select>
+                                <div id="building_idError" class="text-danger mt-1"></div>
+                            </div>
 
-                  <div class="row">
-                         <div class="col-md-5 mx-5">
-                        <div class="form-group mb-2">
-                            <label>Building  <span class="text-danger">*</span></label>
-                        <select name="building_id" id="building_id" class=" form-control single-select-placehoder select2">
-                            <option value="" disabled selected> Select a Building </option>
-                            @foreach ($buildings as $building)
-                                <option value="{{ $building->id }}">{{ $building->name }}</option>
-                            @endforeach
-                        </select>
+                            <div class="form-group mb-2">
+                                <label for="name">Name: <span class="text-danger">*</span></label>
+                                <input type="text" name="name" id="name" class="form-control" placeholder="Customer name">
+                                <div id="nameError" class="text-danger mt-1"></div>
+                            </div>
+
+                            <div class="form-group mb-2">
+                                <label for="mobile_no">Mobile No: <span class="text-danger">*</span></label>
+                                <input type="text" name="mobile_no" id="mobile_no" class="form-control" placeholder="Mobile Number">
+                                <div id="mobile_noError" class="text-danger mt-1"></div>
+                            </div>
                         </div>
 
-                        <div class="form-group mb-2">
-                            <label for="name">Name: <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control" placeholder="Customer name">
-                        </div>
+                        <div class="col-md-5">
+                            <div class="form-group mb-2">
+                                <label for="cnic">CNIC No: <span class="text-danger">*</span></label>
+                                <input type="text" name="cnic" id="cnic" class="form-control" placeholder="CNIC No">
+                                <div id="cnicError" class="text-danger mt-1"></div>
+                            </div>
 
-                        <div class="form-group mb-2">
-                            <label for="mobile_no">Mobile No: <span class="text-danger">*</span></label>
-                            <input type="text" name="mobile_no" class="form-control" placeholder="Mobile Number">
-                        </div>
-                   </div>
+                            <div class="form-group mb-2">
+                                <label for="address">Address: <span class="text-danger">*</span></label>
+                                <input type="text" name="address" id="address" class="form-control" placeholder="Address">
+                                <div id="addressError" class="text-danger mt-1"></div>
+                            </div>
 
-                   <div class="col-md-5">
-                        <div class="form-group mb-2">
-                            <label for="cnic">CNIC No: <span class="text-danger">*</span></label>
-                            <input type="text" name="cnic" class="form-control" placeholder="CNIC No">
+                            <div class="form-group mb-2">
+                                <input type="hidden" name="status" id="status"> 
+                            </div>
                         </div>
-
-                        <div class="form-group mb-2">
-                            <label for="address">Address: <span class="text-danger">*</span></label>
-                            <input type="text" name="address" class="form-control" placeholder="Address">
-                        </div>
-
-                        <div class="form-group mb-2">
-                          <input type="hidden" name="status" id="status"> 
-                        </div>
-                   </div>
-                  </div>
+                    </div>
                     <hr>
 
                     {{-- Agreement Section --}}
@@ -63,16 +68,19 @@
                                     <!-- This will be filled dynamically with rooms based on selected building -->
                                    {{-- / <option value="">Select Room or Shop</option> --}}
                                 </select>
+                                <div id="room_shop_idError" class="text-danger mt-1"></div>
                             </div>
 
                             <div class="form-group mb-2">
                                 <label>Start Date</label>
                                 <input type="date" name="start_date" class="form-control" id="start_date">
+                                <div id="start_dateError" class="text-danger mt-1"></div>
                             </div>
 
                             <div class="form-group mb-2">
                                 <label>End Date</label>
                                 <input type="date" name="end_date" class="form-control" id="end_date">
+                                <div id="end_dateError" class="text-danger mt-1"></div>
                             </div>
                         </div>
                     
@@ -80,11 +88,13 @@
                             <div class="form-group mb-2">
                                 <label>Duration (months)</label>
                                 <input type="text" name="duration" class="form-control" id="duration" readonly>
+                                <div id="durationError" class="text-danger mt-1"></div>
                             </div>
 
                             <div class="form-group mb-2">
                                 <label>Monthly Rent</label>
-                                <input type="text" name="monthly_rent" class="form-control">
+                                <input type="text" name="monthly_rent" id="monthly_rent" class="form-control">
+                                <div id="monthly_rentError" class="text-danger mt-1"></div>
                             </div>
 
                             <!-- Hidden status field -->
@@ -133,6 +143,7 @@
                 <h4>{{$title}} List</h4>
             </div>
             <div class="card-body">
+                <div id="formError" class="alert alert-danger d-none"></div>
                 <div class="table-responsive">
                     <table class="table table-bordered" id="customersTable" width="100%" cellspacing="0">
                         <thead>

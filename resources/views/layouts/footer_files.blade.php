@@ -24,7 +24,7 @@
 
      <!-- select2 -->
  
- <script src="{{ asset('assets/vendor/select2/js/select2.min.js')  }}"></script> --}}
+ <script src="{{ asset('assets/vendor/select2/js/select2.min.js')  }}"></script> 
 
 
  <!-- Toastr -->

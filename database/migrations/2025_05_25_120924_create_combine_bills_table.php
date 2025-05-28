@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('building_reports', function (Blueprint $table) {
+        Schema::create('combine_bills', function (Blueprint $table) {
             $table->id();
-            $table->softDeletes();
             $table->timestamps();
         });
     }
@@ -23,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('building_reports');
+        Schema::dropIfExists('combine_bills');
     }
 };

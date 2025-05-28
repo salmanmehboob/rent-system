@@ -1,0 +1,90 @@
+@extends('layouts.app')
+@section('title')
+    
+
+
+
+    @section('content')
+    @php
+        $months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        $currentYear = now()->year;
+        $startYear = $currentYear - 20;
+
+    @endphp
+    <div class="reow">
+        @if(session('custom_success'))
+        <div class="alert alert-success">
+            {{ session('custom_success') }}
+        </div>
+    @endif
+
+    @if(session('custom_error'))
+        <div class="alert alert-danger">
+            {{ session('custom_error') }}
+        </div>
+    @endif
+        <div class="col-md-8 mx-5">
+            <div class="card">
+                <div class="card-header">
+                    <h2>{{ $title }}</h2>
+                </div>
+                <div class="card body">
+                    <form action="{{ route('invoices.combine') }}" method="post" class="p-5">
+                        @csrf
+                        <div class="form-group mb-2">
+                            <label>Building  <span class="text-danger">*</span></label>
+                            <select name="building_id" id="building_id" class=" form-control single-select-placehoder select2">
+                                <option value="" disabled selected> Select a Building </option>
+                                @foreach ($buildings as $building)
+                                    <option value="{{ $building->id }}">{{ $building->name }}</option>
+                                @endforeach
+                            </select>
+                            <span id="building_idError" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-2">
+                            <label for="month">Month <span class="text-danger">*</span></label>
+                            <select name="month" id="month" class="form-control select2">
+                                <option value="">select month</option>
+                                @foreach ($months as $month)
+                                    <option value="{{ $month }}">{{ $month }}</option>
+                                @endforeach
+                            </select>
+                            <span id="monthError" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-2">
+                            <label for="year">Year <span class="text-danger">*</span></label>
+                            <select name="year" id="year" class="form-control select2">
+                                <option value="" >select Year</option>
+                                @for ($year=$currentYear; $year>= $startYear; $year--)
+                                    <option value="{{ $year }}">{{ $year }}</option>
+                                @endfor
+                            </select>
+                            <span id="yearError" class="text-danger"></span>
+                        </div>
+
+
+                        <button type="submit" id="submitBtn" 
+                        class="d-none d-sm-inline-block btn btn-lg btn-primary shadow-sm mt-4">Generate All Receipts</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+@endsection
+
+@push('js')
+
+    <script>
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, 4000);
+    </script>
+
+@endpush

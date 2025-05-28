@@ -3,9 +3,11 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class RoomShop extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'building_id',
@@ -40,15 +42,17 @@ class RoomShop extends Model
     {
         static::updating(function ($roomshop) {
             if ($roomshop->isDirty('availability') && $roomshop->availability == 1) {
-                // Deactivate all agreements linked to this room
-                foreach ($roomshop->agreements as $agreement) {
-                    $agreement->update([
-                        'status' => 'inactive',
-                        'end_date' => now()
-                    ]);
-                }
+                // Optional: only run this if it's part of agreement termination
+                if (request()->routeIs('agreements.*')) {
+                    foreach ($roomshop->agreements()->where('status', 'active')->get() as $agreement) {
+                        $agreement->update([
+                            'status' => 'inactive',
+                            'end_date' => now()
+                        ]);
+                    }
 
-                $roomshop->customer_id = null;
+                    $roomshop->customer_id = null;
+                }
             }
         });
 

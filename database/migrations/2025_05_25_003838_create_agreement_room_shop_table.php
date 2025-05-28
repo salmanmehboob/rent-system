@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('agreement_id')->constrained('agreements')->onDelete('cascade');
             $table->foreignId('room_shop_id')->constrained('room_shops')->onDelete('cascade');
+            $table->softDeletes();
             $table->timestamps();
         });
     }
