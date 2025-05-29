@@ -66,6 +66,16 @@
                                 </select>
                                 <span id="yearError" class="text-danger"></span>
                             </div>
+                            <div class="form-group mb-2">
+                                <Label for="status">Payment Status <span class="text-danger">*</span></Label>
+                                <select name="status" id="status" class="form-control  select2">
+                                    <option value="">select status</option>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Unpaid" selected>Unpaid</option>
+                                    <option value="Partially Paid">Partially Paid</option>
+                                </select>
+                                <span id="statusError" class="text-danger"></span>
+                            </div>
 
                         </div>
 
@@ -79,35 +89,20 @@
 
                             
                                {{-- this is for dues  --}}
-                            <input hidden type="text" name="dues" class="form-control" id="dues" readonly>
-                             
-
-                             <div class="form-group mb-2">
-                                <label for="dues">Paid<span class="text-danger">*</span></label>
-                                <input type="text" name="paid" class="form-control" id="paid" readonly>
+                            <div class="form-group mb-2">
+                                <label for="dues">Dues<span class="text-danger">*</span></label>
+                                <input type="text" name="dues" class="form-control" id="dues" readonly>
                                 <span id="duesError" class="text-danger"></span>
                             </div>
 
+
                             {{-- this is for total --}}
-                            <input hidden type="text" name="total" class="form-control" id="total" readonly>
-                      
                             <div class="form-group mb-2">
-                                <label for="remaining">Remaining<span class="text-danger">*</span></label>
-                                <input type="text" name="remaining" class="form-control" id="remaining" readonly>
-                                <span id="remainingError" class="text-danger"></span>
+                                <label for="total">Total<span class="text-danger">*</span></label>
+                                <input type="text" name="total" class="form-control" id="total" readonly>
+                                <span id="totalError" class="text-danger"></span>
                             </div>
-
-                             <div class="form-group mb-2">
-                                <Label for="status">Payment Status <span class="text-danger">*</span></Label>
-                                <select name="status" id="status" class="form-control  select2">
-                                    <option value="">select status</option>
-                                    <option value="Paid">Paid</option>
-                                    <option value="Unpaid" selected>Unpaid</option>
-                                    <option value="Partially Paid">Partially Paid</option>
-                                </select>
-                                <span id="statusError" class="text-danger"></span>
-                            </div>
-
+                      
                             
                         </div>
                    </div>
@@ -239,13 +234,13 @@
                             </tr>
 
                             <tr>
-                                <th>Rent Amount</th>
-                                <td id="modalRentAmount"></td>
+                                <th>Remaining</th>
+                                <td id="modalRemaining"></td>
                             </tr>
 
                             <tr>
-                                <th>Remaining</th>
-                                <td id="modalRemaining"></td>
+                                <th>Rent Amount</th>
+                                <td id="modalRentAmount"></td>
                             </tr>
                             </table>
 
@@ -355,8 +350,6 @@
             $('#customer_id').html('<option value="">Select Customer</option>').trigger('change');
             $('#rent_amount').val('');
             $('#dues').val('');
-            $('#paid').val('');
-            $('#remaining').val('');
         }
     });
 
@@ -379,7 +372,7 @@
 
                 data.forEach(item => {
                  
-                    options += `<option data-remaining="${item.remaining}" data-paid="${item.paid}" data-dues="${item.dues}" data-rent="${item.rent_amount}" value="${item.id}">${item.name}</option>`;
+                    options += `<option data-dues="${item.dues}" data-rent="${item.rent_amount}" value="${item.id}">${item.name}</option>`;
                 });
 
                 $select.html(options);
@@ -401,23 +394,19 @@
         const selectedOption = $(this).find('option:selected');
         const dues = selectedOption.data('dues') || 0;
         const rent = selectedOption.data('rent') || 0;
-        const paid = selectedOption.data('paid') || 0;
-        const remaining = selectedOption.data('remaining') || 0;
         
 
-        console.log(rent , dues , paid)
+        console.log(rent , dues)
 
         $('#rent_amount').val(rent);
         $('#dues').val(dues);
-        $('#paid').val(paid);
-        $('#remaining').val(remaining);
         
         // Calculate total immediately after populating
         calculateTotal();
     });
 
     // Calculate total when either rent or dues changes
-    $('#rent_amount, #paid, #dues').on('input', function() {
+    $('#rent_amount, #dues').on('input', function() {
         calculateTotal();
     });
 
@@ -425,8 +414,7 @@
     function calculateTotal() {
         const rent = parseFloat($('#rent_amount').val()) || 0;
         const dues = parseFloat($('#dues').val()) || 0;
-        const paid = parseFloat($('#paid').val()) || 0;
-        const subtotal = rent + dues - paid;
+        const subtotal = rent + dues;
         $('#total').val(subtotal); // Format to 2 decimal places
     }
    
@@ -446,7 +434,7 @@
                 { data: 'year', name: 'year' },
                 { data: 'rent_amount', name: 'rent_amount' },
                 { data: 'paid', name: 'paid' },
-                { data: 'remaining', name: 'remaining' },
+                { data: 'remaining', name: 'remianing' },
                 { data: 'status', name: 'status' },
                 { data: 'actions', name: 'actions', orderable: false, searchable: false },
             ]
@@ -496,15 +484,17 @@
                 },
                 success: function (response) {
                     if (response.transactions && response.transactions.length > 0) {
-                        let html = '<table class="table table-bordered"><thead><tr><th>Month</th><th>Year</th><th>Paid</th><th>Dues</th><th>Note</th><th>Date</th></tr></thead><tbody>';
+                        let html = '<table class="table table-bordered"><thead><tr><th>Customer</th><th>Month</th><th>Year</th><th>Paid</th><th>Dues</th><th>Note</th><th>Date</th></tr></thead><tbody>';
                         response.transactions.forEach(transaction => {
                             const dateObj = new Date(transaction.created_at);
+                            const customerName = transaction.invoice?.customer?.name ?? '';
                             const formattedDate = dateObj.toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'long',
                                 day: 'numeric'
                             });
                             html += `<tr>
+                                <td>${customerName}</td>
                                 <td>${transaction.month}</td>
                                 <td>${transaction.year}</td>
                                 <td>${transaction.paid}</td>

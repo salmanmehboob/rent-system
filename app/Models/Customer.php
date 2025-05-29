@@ -91,5 +91,10 @@ class Customer extends Model
         });
     }
 
+    public function reports()
+    {
+        return $this->hasMany(CustomerReport::class);
+    }
+
 
 }

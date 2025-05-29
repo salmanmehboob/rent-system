@@ -40,7 +40,16 @@
 
  <script src="{{ asset('assets/js/custom.js')  }}"></script>
 
+ {{-- export buttons --}}
+ <script src="{{ asset('assets/vendor/export-buttons/js/dataTables.buttons.min.js') }}"></script> 
+ <script src="{{ asset('assets/vendor/export-buttons/js/jszip.min.js') }}"></script>
+ <script src="{{ asset('assets/vendor/export-buttons/js/pdfmake.min.js') }}"></script>
+ <script src="{{ asset('assets/vendor/export-buttons/js/vfs_fonts.js') }}"></script>
+ <script src="{{ asset('assets/vendor/export-buttons/js/buttons.html5.min.js') }}"></script>
+ <script src="{{ asset('assets/vendor/export-buttons/js/buttons.print.min.js') }}"></script>
 
+
+ 
  <script>
     var urlPath = '<?php echo url(""); ?>';
     var CSRF_TOKEN = '<?php echo csrf_token(); ?>';
@@ -52,7 +61,5 @@
         info: @json(session('info'))
     };
  </script>
-
-
 
  @stack('js')

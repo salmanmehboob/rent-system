@@ -17,7 +17,7 @@ return new class extends Migration
             $table->integer('year');
             $table->string('month');
             $table->string('paid');
-            $table->string('dues');
+            $table->string('remaining');
             $table->string('note');
             $table->softDeletes();
             $table->timestamps();

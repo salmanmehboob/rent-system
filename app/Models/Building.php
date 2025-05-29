@@ -21,7 +21,7 @@ class Building extends Model
   
    public function rooms()
    {
-      return $this->hasMany(Room::class);
+      return $this->hasMany(RoomShop::class);
    }
 
     public function customers()
@@ -32,5 +32,15 @@ class Building extends Model
    public function invoices()
    {
       return $this->hasMany(Transaction::class);
+   }
+
+   public function reports()
+   {
+      return $this->hasMany(BuildingReport::class);
+   }
+
+   public function dues()
+   {
+      return $this->hasMany(DuesReport::class);
    }
 }

@@ -112,9 +112,7 @@ class InvoiceController extends Controller
                 'year' => 'required|integer',
                 'rent_amount' => 'required|numeric',
                 'dues' => 'required|numeric',
-                'paid' => 'nullable|numeric',
                 'total' => 'required|numeric',
-                'remaining' => 'required|string',
                 'status' => 'required|in:Unpaid,Paid,Partially Paid',
             ]);
 
@@ -144,6 +142,8 @@ class InvoiceController extends Controller
 
                 $validatedData['agreement_id'] = $agreement->id;
                 $validatedData['remaining'] = $validatedData['total'];
+                $validatedData['paid'] = $validatedData['paid'] ?? 0; 
+
                 // dd($validatedData);
                  $invoice = Invoice::create($validatedData);
 
@@ -217,7 +217,7 @@ class InvoiceController extends Controller
                     continue;
                 }
 
-               
+                // Check if invoice already exists for this customer/month/year
                 $existingInvoice = Invoice::where('customer_id', $customer->id)
                     ->where('month', $validatedData['month'])
                     ->where('year', $validatedData['year'])
@@ -228,30 +228,34 @@ class InvoiceController extends Controller
                     continue;
                 }
 
+                // Calculate rent amount
                 $roomCount = $agreement->roomShops->count();
                 $monthlyRent = $agreement->monthly_rent;
                 $rentAmount = $monthlyRent * $roomCount;
 
+                // Get previous dues (remaining from last invoice)
                 $lastInvoice = Invoice::where('customer_id', $customer->id)
                     ->where('is_active', true)
                     ->orderByDesc('id')
                     ->first();
 
                 $previousDues = $lastInvoice ? $lastInvoice->remaining : 0;
-                $subTotal = $rentAmount + $previousDues;
+                $total = $rentAmount + $previousDues;
 
+                // Create the invoice with proper values
                 Invoice::create([
                     'building_id'     => $validatedData['building_id'],
                     'customer_id'     => $customer->id,
+                    'agreement_id'    => $agreement->id,
                     'month'           => $validatedData['month'],
                     'year'            => $validatedData['year'],
                     'rent_amount'     => $rentAmount,
                     'dues'            => $previousDues,
-                    'remaining'       => $previousDues,
-                    'total'           => $subTotal,
-                    'status'          => 'Unpaid',
-                    'is_active'       => true,
-                    'current_dues'    => $subTotal,
+                    'paid'            => 0, // Default to 0 for new invoices
+                    'total'           => $total,
+                    'remaining'       => $total, // Initially remaining equals total
+                    'status'          => 'Unpaid', // Default status
+                    'is_active'      => true,
                 ]);
 
                 $insertedCount++;
@@ -259,12 +263,11 @@ class InvoiceController extends Controller
 
             DB::commit();
 
-                
             if ($insertedCount === 0) {
-                return redirect()->back()->with('custom_error', 'Not enough data to generate bills.');
+                return redirect()->back()->with('custom_error', 'No new bills generated. All customers already have invoices for this period.');
             }
 
-            return redirect()->route('bills')->with('custom_success'," {$insertedCount} bills generated successfully. please check Invoices.");
+            return redirect()->route('bills')->with('custom_success', "{$insertedCount} bills generated successfully. {$skippedCount} customers skipped (already had invoices).");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -315,7 +318,7 @@ class InvoiceController extends Controller
                 'paid' =>  $validatedData['paid'],
                 'year' =>$invoice->year,
                 'month' => $invoice->month,
-                'dues' =>  $remaining,
+                'remaining' =>  $remaining,
                 'note' => $validatedData['note'],
             ];
                  
@@ -378,16 +381,12 @@ class InvoiceController extends Controller
             
             $totalDues = $customer->invoices->sum('remaining');
             $totalPaid = $customer->invoices->sum('paid');
-            $remaining = $customer->invoices->sum('remaining');
  
             return [
                 'id' => $customer->id,
                 'name' => $customer->name,
                 'rent_amount' => $totalRent,
                 'dues' => $totalDues,
-                'paid' => $totalPaid,
-                'remaining' => $remaining,
-                
             ];
         })->values();
 
@@ -397,7 +396,7 @@ class InvoiceController extends Controller
 
     public function getTransactions($id)
     {
-        $invoice = Invoice::with('transactions')->find($id);
+        $invoice = Invoice::with('transactions.invoice.customer')->find($id);
 
         return response()->json([
             'transactions' => $invoice->transactions

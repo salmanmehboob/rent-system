@@ -27,3 +27,7 @@
 
 <!-- Sweet Alert -->
 <link href="{{asset('assets/vendor/sweetalert2/dist/sweetalert2.min.css')}}" rel="stylesheet">
+
+{{-- style for export buttons --}}
+<link rel="stylesheet" href="{{ asset('assets/vendor/export-buttons/css/buttons.dataTables.min.css') }}">
+
