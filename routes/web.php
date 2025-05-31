@@ -8,9 +8,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PrintController;
 use App\Http\Controllers\ReportController;
-// use App\http\Controllers\ReportCustomerController;
-// use App\http\Controllers\ReportBuildingController;
-// use App\http\Controllers\ReportDuesController;
+
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -82,29 +80,6 @@ Route::middleware('auth')->group( function() {
     Route::get('/total-bills', [InvoiceController::class, 'show'])->name('bills');
 
 
-
-    // // customer reports routes
-    // Route::prefix('customer-reports')->name('customer-reports.')->group(function (){
-    //     Route::get('/', [ReportCustomerController::class, 'index'])->name('index');
-    //     Route::post('/', [ReportCustomerController::class, 'store'])->name('store');
-    // });
-
-    // // building reports route
-    // Route::prefix('building-reports')->name('building-reports.')->group(function (){
-    //     Route::get('/', [ReportBuildingController::class, 'index'])->name('index');
-    //     Route::post('/', [ReportBuildingController::class, 'store'])->name('store');
-    // });
-
-    // // dues reports routes
-    // Route::prefix('dues-reports')->name('dues-reports.')->group(function (){
-    //     Route::get('/', [ReportDuesController::class, 'index'])->name('index');
-    //     Route::post('/', [ReportDuesController::class, 'store'])->name('store');
-    // });
-
-    
-
-
-
     // routes/web.php
 
     Route::prefix('reports')->name('reports.')->controller(ReportController::class)->group(function () {
@@ -112,6 +87,7 @@ Route::middleware('auth')->group( function() {
         Route::get('buildings', 'getBuildingReports')->name('buildings');
         Route::get('dues', 'getDuesReports')->name('dues');
     });
+    // get rooms and shops by selecting building
     Route::get('/', [ReportController::class, 'getByBuilding'])->name('depend');
 
 });

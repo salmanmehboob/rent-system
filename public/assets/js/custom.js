@@ -334,35 +334,14 @@ $(document).ready(function () {
                 // Reset submit button state
                 submitBtn.prop('disabled', false).text('Save');
             },
-            // error: function (xhr) {
-            //     $(".text-danger").html(""); // clear previous errors
-            //     $("#formError").addClass("d-none").html(""); // clear global error
+     
 
-            //     if (xhr.status === 422) {
-            //         const response = xhr.responseJSON;
-
-            //         // Field-specific errors
-            //         if (response.errors) {
-            //             $.each(response.errors, function (key, messages) {
-            //                 form.find(`#${key}Error`).text(messages[0]);
-            //             });
-            //         }
-
-            //         // Special global message check
-            //         if (response.global) {
-            //             $("#formError").removeClass("d-none").html(response.global[0]);
-            //         }
-            //     } else {
-            //         errorContainer.removeClass('d-none').text('An unexpected error occurred.');
-            //     }
-            // }
-
-           error: function (xhr) {
-                $(".text-danger").html(""); // clear previous errors
-                $("#formError").addClass("d-none").html(""); // clear global error
+            error: function (xhr) {
+                $(".text-danger").html(""); // Clear previous errors
+                $("#formError").addClass("d-none").html(""); // Hide and clear the global error initially
 
                 // Re-enable submit button
-                submitBtn.prop('disabled', false).text('Save'); // ✅ add this
+                submitBtn.prop('disabled', false).text('Save');
 
                 if (xhr.status === 422) {
                     let errors = xhr.responseJSON.errors;
@@ -372,15 +351,31 @@ $(document).ready(function () {
                         $("#" + key + "Error").html(value[0]);
                     });
 
-                    // Special global message check
+                    // Global error message with animation
                     if (errors.global) {
-                        $("#formError").removeClass("d-none").html(errors.global[0]);
+                        $("#formError")
+                            .removeClass("d-none")
+                            .hide()
+                            .html(errors.global[0])
+                            .fadeIn("slow")        // ✅ Fade-in
+                            .delay(3000)           // ✅ Show for 4 seconds
+                            .fadeOut("slow", function () {
+                                $(this).addClass("d-none").html("").show(); // Reset for next time
+                            });
                     }
                 } else {
-                    // General error fallback
-                    $("#formError").removeClass("d-none").html("An unexpected error occurred.");
+                    $("#formError")
+                        .removeClass("d-none")
+                        .hide()
+                        .html("An unexpected error occurred.")
+                        .fadeIn("slow")
+                        .delay(3000)
+                        .fadeOut("slow", function () {
+                            $(this).addClass("d-none").html("").show();
+                        });
                 }
             }
+
 
         });
     });

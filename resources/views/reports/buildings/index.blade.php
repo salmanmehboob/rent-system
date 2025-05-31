@@ -2,16 +2,16 @@
 @section('title', $title)
 
 @section('content')
+
     <div class="row">
+
         <div class="col-md-3">
             <div class="card">
                 <div class="card-header">
                 <h4>{{ $title }}</h4>
                 </div>
                 <div class="card-body">
-                    <form class="ajax-form" data-table="buildingsTable" action="{{ route('reports.buildings') }}">
-                        @csrf
-
+                    <form class="ajax-form" data-table="buildingsTable" action="javascript:void(0);">
                         <div class="form-group mb-2">
                             <label for="building">Buildings <span class="text-danger">*</span></label>
                             <select name="building_id" id="building_id" class=" form-control single-select-placeholder select2">
@@ -21,9 +21,7 @@
                                 @endforeach
                             </select>
                         </div>
-
-
-                      <button type="submit" id="submitBtn" class="btn btn-primary float-end submit-btn">Generate Report</button>
+                      <button type="button" id="submitBtn" class="btn btn-primary float-end submit-btn">Generate Report</button>
                     </form>
                 </div>
             </div>
@@ -99,6 +97,13 @@
                     }
                 ]
             });
+            $('#submitBtn').on('click', function () {
+                let buildingId = $('#building_id').val();
+
+                let table = $('#buildingsTable').DataTable();
+                table.ajax.url("{{ route('reports.buildings') }}?building_id=" + buildingId).load();
+            });
+
         });
     </script>
     

@@ -84,6 +84,20 @@ class RoomShopController extends Controller
               
             ]);
 
+                // 🧠 Custom uniqueness check: same building + type + number
+            $exists = RoomShop::where('building_id', $validatedData['building_id'])
+                ->where('type', $validatedData['type'])
+                ->where('no', $validatedData['no'])
+                ->exists();
+                $building = Building::find($validatedData['building_id']);
+            if ($exists) {
+                return response()->json([
+                    'errors' => [
+                        'global' => ['A ' . $validatedData['type'] . ' with ' . $validatedData['no'] . ' number already exists in ' . $building->name .'.' ]
+                    ]
+                ], 422);
+            }
+
             try {
                 // Start a database transaction
                 DB::beginTransaction(); 

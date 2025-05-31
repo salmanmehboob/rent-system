@@ -4,7 +4,8 @@
 @endpush
 @php
     $months = [
-        'January', 'Februry', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'
+        1 => 'January',  2 => 'Februry',  3 => 'March',  4 => 'April',  5 => 'May',  6 => 'June',  7 => 'July',  
+        8 => 'August',  9 => 'September',  10 => 'October',  11 => 'November',  12 => 'December'
     ];
 
     $currentYear = now()->year;
@@ -20,8 +21,8 @@
                     <h2>{{ $title }} Form</h2>
                 </div>
                 <div class="card-body">
-                    <form class="ajax-form" data-table="customersTable" action="{{ route('reports.customers') }}">
-                        @csrf
+                    <form class="ajax-form" data-table="customersTable" action="javascript:void(0);">
+
                       <div class="row">
                         <div class="col-md-5" style="padding-left: 5rem;">
                             <div class="form-group mb-2">
@@ -38,8 +39,8 @@
                                     <Label for="start_month">From Month <span class="text-danger">*</span></Label>
                                     <select name="start_month" id="start_month" class="form-control single-select-placeholder select2">
                                         <option value="" >select month</option>
-                                        @foreach ($months as $month)
-                                        <option value="{{ $month }}">{{ $month }}</option>
+                                        @foreach ($months as $key => $month)
+                                        <option value="{{ $key }}">{{ $month }}</option>
                                         @endforeach
                                     </select>
                             </div>
@@ -59,8 +60,8 @@
                                     <Label for="end_month">To Month <span class="text-danger">*</span></Label>
                                     <select name="end_month" id="end_month" class="form-control single-select-placeholder select2">
                                         <option value="" >select month</option>
-                                        @foreach ($months as $month)
-                                        <option value="{{ $month }}">{{ $month }}</option>
+                                        @foreach ($months as $key => $month)
+                                        <option value="{{ $key }}">{{ $month }}</option>
                                         @endforeach
                                     </select>
                             </div>
@@ -77,7 +78,7 @@
                         </div>
                       </div>
 
-                      <button type="submit" id="submitBtn" class="btn btn-primary float-end submit-btn">Generate Report</button>
+                      <button type="button" id="submitBtn" class="btn btn-primary float-end submit-btn">Generate Report</button>
                     </form>
                 </div>
             </div>
@@ -112,51 +113,39 @@
 @endsection
 
 @push('js')
-
-
-
     <script>
-       $(document).ready(function() {
-
-            $('#customersTable').DataTable({
+        $(document).ready(function () {
+            const table = $('#customersTable').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('reports.customers') }}",
-                dom: 'Bfrtip', // 👈 enables button bar
-                buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ],
+                ajax: {
+                    url: "{{ route('reports.customers') }}",
+                    data: function (d) {
+                        d.customer_id = $('#customer_id').val();
+                        d.start_month = $('#start_month').val();
+                        d.start_year = $('#start_year').val();
+                        d.end_month = $('#end_month').val();
+                        d.end_year = $('#end_year').val();
+                    }
+                },
+                dom: 'Bfrtip',
+                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
                 columns: [
-                    {
-                        data: 'id',
-                        name: 'id'
-                    },
-                    {
-                        data: 'customer_name',
-                        name: 'customer_name'
-                    },
-                    {
-                        data: 'month',
-                        name: 'month'
-                    },
-                    {
-                        data: 'rent',
-                        name: 'rent'
-                    },
-                    {
-                        data: 'paid_amount',
-                        name: 'paid_amount'
-                    },
-                    {
-                        data: 'dues',
-                        name: 'dues'
-                    },
-                    {
-                        data: 'payment_date',
-                        name: 'payment_date'
-                    },
+                    { data: 'id', name: 'id' },
+                    { data: 'customer_name', name: 'customer_name' },
+                    { data: 'month', name: 'month' },
+                    { data: 'rent', name: 'rent' },
+                    { data: 'paid_amount', name: 'paid_amount' },
+                    { data: 'dues', name: 'dues' },
+                    { data: 'payment_date', name: 'payment_date' },
                 ]
             });
-       });
+
+            // Reload the table on button click
+            $('#submitBtn').click(function () {
+                table.ajax.reload();
+            });
+        });
     </script>
+
 @endpush

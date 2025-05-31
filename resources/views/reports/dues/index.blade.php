@@ -9,8 +9,7 @@
                     <h4>{{ $title }}</h4>
                 </div>
                 <div class="card-body">
-                    <form class="ajax-form" data-table="duesTable" action="{{ route('reports.dues') }}">
-                        @csrf
+                    <form class="ajax-form" data-table="duesTable" action="javascript:void(0);">
                         <div class="form-group mb-2">
                             <label for="building">Building <span class="text-danger">*</span></label>
                             <select name="building_id" id="building_id" class="form-control single-select-placeholder select2">
@@ -27,7 +26,7 @@
 
                             </select>
                         </div>
-                        <button type="submit" id="submitBtn" class="btn btn-primary float-end submit-btn">Generate Report</button>
+                        <button type="button" id="submitBtn" class="btn btn-primary float-end submit-btn">Generate Report</button>
                     </form>
                 </div>
             </div>
@@ -81,47 +80,35 @@
 
 
         $(document).ready(function () {
-            // Initialize empty table
-            let duesTable = $('#duesTable').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: {
-                    url: "{{ route('reports.dues') }}",
-                    data: function (d) {
-                        d.building_id = $('#building_id').val();
-                        d.room_shop_id = $('#room_shop_id').val();
-                    },
-                    error: function(xhr, error, thrown) {
-                        console.error('AJAX Error:', xhr.responseText);
-                    }
+        let duesTable = $('#duesTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('reports.dues') }}",
+                data: function (d) {
+                    d.building_id = $('#building_id').val();
+                    d.room_shop_id = $('#room_shop_id').val();
                 },
-                dom: 'Bfrtip',
-                buttons: ['copy', 'csv', 'pdf', 'excel', 'print'],
-                columns: [
-                    { data: 'building', name: 'building' },
-                    { data: 'customer', name: 'customer' },
-                    { data: 'property', name: 'property' },
-                    { data: 'total_dues', name: 'total_dues' }
-                ]
-            });
-
-            // Handle form submission
-            $('.ajax-form').on('submit', function(e) {
-                e.preventDefault();
-                
-                let buildingId = $('#building_id').val();
-                let roomShopId = $('#room_shop_id').val();
-
-                if (!buildingId) {
-                    alert('Please select a building before generating the report.');
-                    return;
+                error: function(xhr, error, thrown) {
+                    console.error('AJAX Error:', xhr.responseText);
                 }
-
-                // Reload the table with new parameters
-                duesTable.ajax.reload();
-            });
-
+            },
+            dom: 'Bfrtip',
+            buttons: ['copy', 'csv', 'pdf', 'excel', 'print'],
+            columns: [
+                { data: 'building', name: 'building' },
+                { data: 'customer', name: 'customer' },
+                { data: 'property', name: 'property' },
+                { data: 'total_dues', name: 'total_dues' }
+            ]
         });
+
+        $('#submitBtn').on('click', function () {
+            $('#duesTable').DataTable().ajax.reload();
+        });
+
+    });
+
 
     </script>    
 @endpush

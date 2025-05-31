@@ -45,7 +45,7 @@ class Agreement extends Model
 
     public function invoices()
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Invoice::class);
     }
 
     // public function transactions()

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('building_id')->constrained('buildings')->onDelete('cascade');
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->foreignId('agreement_id')->constrained('agreements')->onDelete('cascade');
             $table->integer('year');
             $table->string('month');
             $table->string('rent_amount');
