@@ -82,20 +82,46 @@ class InvoiceController extends Controller
                 ->addColumn('actions', function ($invoice) {
                     $buttons = '<div class="d-flex">';
 
+                    $buttons .= '
+                        <a href="' . route('print', $invoice->id) . '"
+                        target="_blank"
+                        class="btn btn-secondary shadow btn-sm sharp mx-2"
+                        title="Print Invoice"><i class="fa fa-print"></i></a>
+                        ';
+
+                             // Add Edit button for Current invoices
                        $buttons .= '
-                            <a href="' . route('print', $invoice->id) . '"
-                            target="_blank"
-                            class="btn btn-secondary shadow btn-sm sharp mx-2"
-                            title="Print Invoice"><i class="fa fa-print"></i></a>
-                            ';
+                       <a href="#" 
+                       class="btn btn-warning shadow btn-sm sharp mx-2 editInvoiceBtn"
+                       title="Edit Invoice"
+                       data-id="' . $invoice->id . '"
+                       data-url="' . route('invoices.updateInvoice', $invoice->id) . '"
+                       data-name="' . $invoice->customer->name . '"
+                       data-building_id="' . $invoice->building_id . '"
+                       data-customer_id="' . $invoice->customer_id . '"
+                       data-month="' . $invoice->month . '"
+                       data-year="' . $invoice->year . '"
+                       data-rent_amount="' . $invoice->rent_amount . '"
+                       data-paid="' . $invoice->paid . '"
+                       data-dues="' . $invoice->dues . '"
+                       data-remaining="' . $invoice->remaining . '"
+                       data-status="' . $invoice->status . '"
+                       data-type="' . $invoice->type . '"
+                       >
+                       <i class="fas fa-edit"></i>
+                       </a>
+                   ';
+
+
                     // Show Print button only if remaining > 0
                     if ($invoice->type === 'Current') {
                         if($invoice->remaining > 0) {
+                            
                             $buttons .= '
 
                                 <a href="#" 
                                 class="btn btn-primary shadow btn-sm sharp me-1 payNowBtn"
-                                data-url="' . route('invoices.update', $invoice->id) . '"
+                                data-url="' . route('invoices.paid', $invoice->id) . '"
                                 data-id="' . $invoice->id . '"
                                 data-name="' . $invoice->customer->name . '"
                                 data-month="' . $invoice->month . '"
@@ -107,11 +133,8 @@ class InvoiceController extends Controller
                                 <i class="fas fa-credit-card"></i>
                                 </a>
                             ';
-
                         }
-                       
-
-
+                   
                         $buttons .='<a href="javascript:void(0)"
                             data-url="' . route('invoices.transactions', $invoice->id) . '"
                             class="btn btn-primary shadow btn-sm sharp mx-2 transactionHistoryBtn"
@@ -238,6 +261,65 @@ class InvoiceController extends Controller
         return response()->json(['success' => false, 'message' => 'Invalid request.'], 400);
     }
 
+    public function update(Request $request, $id)
+    {
+        $invoice = Invoice::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'building_id' => 'required|exists:buildings,id',
+            'customer_id' => 'required|exists:customers,id',
+            'month' => 'required|string',
+            'year' => 'required|string',
+            'rent_amount' => 'required|numeric|min:0',
+            'dues' => 'nullable|numeric|min:0',
+            'total' => 'required|numeric|min:0',
+            'status' => 'required|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // If month/year/customer changed, recalculate type
+            $newInvoiceDate = Carbon::createFromFormat('d-F-Y H:i:s', '01-' . $validatedData['month'] . '-' . $validatedData['year'] . ' 00:00:00');
+            $existingInvoices = Invoice::where('customer_id', $validatedData['customer_id'])->get();
+
+            
+                $latestInvoice = $existingInvoices->map(function ($inv) {
+                    return [
+                        'model' => $inv,
+                        'date' => Carbon::createFromFormat('d-F-Y H:i:s', '01-' . $inv->month . '-' . $inv->year . ' 00:00:00'),
+                    ];
+                })->sortByDesc('date')->first();
+
+                if ($newInvoiceDate->gt($latestInvoice['date'])) {
+                    $validatedData['type'] = 'Current';
+                    // Update all existing invoices of this customer to 'Previous'
+                    Invoice::where('customer_id', $validatedData['customer_id'])
+                        ->where('type', 'Current')
+                        ->update(['type' => 'Previous', 'status' => 'Dues Adjusted']);
+                } else {
+                    $validatedData['type'] = 'Previous';
+                }
+             
+
+            $invoice->update($validatedData);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => 'Invoice updated successfully.',
+                'message' => 'Invoice updated successfully.',
+                'data' => $invoice
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
     public function combine(Request $request)
@@ -386,7 +468,7 @@ class InvoiceController extends Controller
 
 
 
-    public function update(Request $request, $id)
+    public function paid(Request $request, $id)
     {
             $validatedData = $request->validate([
                 'paid' => 'required|numeric',

@@ -60,7 +60,8 @@ Route::middleware('auth')->group( function() {
         Route::get('/', [InvoiceController::class, 'index'])->name('index');
         Route::get('/{id}', [InvoiceController::class, 'show'])->name('show');
         Route::post('/', [InvoiceController::class, 'store'])->name('store');
-        Route::put('/{id}', [InvoiceController::class, 'update'])->name('update');
+        Route::put('/{id}', [InvoiceController::class, 'update'])->name('updateInvoice');
+        Route::post('/{id}', [InvoiceController::class, 'paid'])->name('paid');
         Route::delete('/{id}', [InvoiceController::class, 'destroy'])->name('destroy');
         // generate all the bills by one click
         Route::post('/all-bills', [InvoiceController::class, 'combine'])->name('combine');

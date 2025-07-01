@@ -113,8 +113,8 @@
                         </div>
 
                     
-                        <button type="submit" id="submitBtn" class="btn btn-primary float-right submit-btn px-4">Save</button>
-                        <button type="button" id="cancelBtn" class="btn btn-secondary float-end me-2 d-none">Cancel Update</button>
+                        <button type="submit" id="submitBtn" class="btn btn-primary float-right m-2 submit-btn px-4">Save</button>
+                        <button type="button" id="cancelBtn" class="btn btn-secondary float-right m-2 d-none">Cancel Update</button>
                     </form>
                 </div>
             </div>
@@ -635,6 +635,53 @@
         // View Invoice button click handler
         $('#viewInvoiceBtn').on('click', function(e) {
             e.preventDefault();
+            $('#invoiceFormDiv').addClass('d-none');
+            $('#invoiceListDiv').removeClass('d-none');
+            $('#addInvoiceBtn').removeClass('d-none');
+            $('#viewInvoiceBtn').addClass('d-none');
+        });
+
+        // Edit Invoice button click handler
+        $(document).on('click', '.editInvoiceBtn', function(e) {
+            e.preventDefault();
+            // Show the form and hide the list
+            $('#invoiceFormDiv').removeClass('d-none');
+            $('#invoiceListDiv').addClass('d-none');
+            $('#addInvoiceBtn').addClass('d-none');
+            $('#viewInvoiceBtn').removeClass('d-none');
+
+            // Fill the form fields with invoice data
+            $('#building_id').val($(this).data('building_id')).trigger('change');
+            // Wait for customer dropdown to populate if needed
+            setTimeout(() => {
+                $('#customer_id').val($(this).data('customer_id')).trigger('change');
+            }, 300);
+            $('#month').val($(this).data('month')).trigger('change');
+            $('#year').val($(this).data('year')).trigger('change');
+            $('#rent_amount').val($(this).data('rent_amount'));
+            $('#dues').val($(this).data('dues'));
+            $('#total').val((parseFloat($(this).data('rent_amount')) + parseFloat($(this).data('dues'))).toFixed(2));
+            $('#status').val($(this).data('status')).trigger('change');
+
+            // Set form action to update
+            $('#invoiceForm').attr('action', $(this).data('url'));
+            // Add hidden _method input for PUT
+            if ($('#invoiceForm input[name="_method"]').length === 0) {
+                $('#invoiceForm').append('<input type="hidden" name="_method" value="PUT">');
+            } else {
+                $('#invoiceForm input[name="_method"]').val('PUT');
+            }
+            // Show cancel button
+            $('#cancelBtn').removeClass('d-none');
+        });
+
+        // Cancel Update button click handler
+        $('#cancelBtn').on('click', function() {
+            // Reset form and UI to add mode
+            $('#invoiceForm')[0].reset();
+            $('#invoiceForm').attr('action', "{{ route('invoices.store') }}");
+            $('#invoiceForm input[name="_method"]').remove();
+            $('#cancelBtn').addClass('d-none');
             $('#invoiceFormDiv').addClass('d-none');
             $('#invoiceListDiv').removeClass('d-none');
             $('#addInvoiceBtn').removeClass('d-none');

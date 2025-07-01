@@ -48,7 +48,7 @@ class CustomerController extends Controller
 
                     if ($agreement && $agreement->roomShops->isNotEmpty()) {
                         return $agreement->roomShops->map(function ($shop) {
-                            return $shop->type . '-' . $shop->no;
+                            return   $shop->no;
                         })->implode(', ');
                     }
 

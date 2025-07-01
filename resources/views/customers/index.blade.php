@@ -177,7 +177,6 @@
                                     <th>Mobile</th>
                                     <th>CNIC</th>
                                     <th>Address</th>
-                                    <th>Status</th>
                                     {{-- Agreement Section --}}
                                     <th>Property</th>
                                     <th>Start</th>
@@ -185,10 +184,12 @@
                                     <th>Duration</th>
                                     <th>Rent</th>
                                     {{-- Witness Section --}}
-                                    <th>Name</th>
+                                    <!-- <th>Name</th>
                                     <th>Mobile</th>
                                     <th>CNIC</th>
-                                    <th>Address</th>
+                                    <th>Address</th> -->
+                                    <th>Status</th>
+
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -281,16 +282,17 @@
                 { data: 'mobile_no', name: 'mobile_no' },
                 { data: 'cnic', name: 'cnic' },
                 { data: 'address', name: 'address' },
-                { data: 'status', name: 'status' },
                 { data: 'property', name: 'property' },
                 { data: 'start_date', name: 'start_date' },
                 { data: 'end_date', name: 'end_date' },
                 { data: 'duration', name: 'duration' },
                 { data: 'monthly_rent', name: 'monthly_rent' },
-                { data: 'witnesses.0.name' },
-                { data: 'witnesses.0.mobile_no' },
-                { data: 'witnesses.0.cnic' },
-                { data: 'witnesses.0.address' },
+                // { data: 'witnesses.0.name' },
+                // { data: 'witnesses.0.mobile_no' },
+                // { data: 'witnesses.0.cnic' },
+                // { data: 'witnesses.0.address' },
+                { data: 'status', name: 'status' },
+
                 { data: 'actions', name: 'actions', orderable: false, searchable: false },
             ]
         });
