@@ -25,8 +25,9 @@
     @endif
         <div class="col-md-8 mx-5">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header" style="display: flex;">
                     <h2>{{ $title }}</h2>
+                    <a href="{{ route('invoices.index') }}" style="margin-left: 15rem; margin-top: 0.5rem; font-size:1.2rem">Go to Invoices</a>
                 </div>
                 <div class="card body">
                     <form action="{{ route('invoices.combine') }}" method="post" class="p-5">

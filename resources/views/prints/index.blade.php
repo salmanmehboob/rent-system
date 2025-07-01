@@ -4,160 +4,151 @@
   <meta charset="UTF-8">
   <title>Rent Receipt</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
-      font-family: Arial, sans-serif;
-      width: 700px;
-      margin: auto;
-      padding: 20px;
+      font-family: Tahoma, Arial, sans-serif;
+      width: 58mm;
+      margin: 0 auto;
+      padding: 0;
+      font-size: 11px;
+      background: #fff;
+    }
+    .invoice-container {
+      width: 100%;
     }
     h2 {
       text-align: center;
-      margin: 0;
+      margin: 0 0 4px 0;
+      font-size: 15px;
+      font-weight: bold;
     }
     .address {
       text-align: center;
-      font-size: 14px;
-      margin-bottom: 20px;
+      font-size: 10px;
+      margin: 0 0 8px;
     }
     .meta {
-      font-size: 14px;
-      margin-bottom: 20px;
-      line-height: 1.6;
+      font-size: 10px;
+      margin-bottom: 6px;
+      line-height: 1.4;
     }
-
     .meta strong {
       display: inline-block;
-      width: 130px;
+      width: 80px;
     }
-
     .line-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
+      font-size: 10px;
+      margin-bottom: 6px;
     }
-
-    .line-table td, .line-table th {
-      border-bottom: 1px solid #000;
-      padding: 8px 0;
+    .line-table th, .line-table td {
+      border-bottom: 1px dashed #000;
+      padding: 2px 0;
     }
-
-    .line-table td:first-child, .line-table th:first-child {
+    .line-table th {
       text-align: left;
+      font-weight: bold;
     }
-
     .line-table td:last-child, .line-table th:last-child {
       text-align: right;
     }
-
     .urdu {
       text-align: center;
-      margin-top: 20px;
+      margin-top: 8px;
       font-family: 'Noto Nastaliq Urdu', serif;
-      font-size: 16px;
-    }
-
-    .footer {
-      text-align: left;
       font-size: 12px;
-      margin-top: 40px;
+    }
+    .footer {
+      font-size: 9px;
+      margin-top: 10px;
+      text-align: left;
     }
 
     @media print {
       body {
-        width: auto;
-        margin: 0;
+        width: 70mm;
+        margin: 5px;
+        padding: 5px;
+      }
+      .footer {
+        margin-top: 6px;
       }
     }
   </style>
 </head>
 <body>
+  <div class="invoice-container">
+    <h2><strong>{{ $invoice->customer->building->name }}</strong></h2>
+    <div class="address">{{ $invoice->customer->building->address }}</div>
+    <div class="address">{{ $invoice->customer->building->contact_person }} {{ $invoice->customer->building->contact }}</div>
 
-  <h2><strong>AppFlex Technology</strong></h2>
-  <div class="address">
-    Al-Sadiq Plaza, F-109-110, Old Post Office Road,<br>
-    Mingora Swat Mingora, Khyber Pakhtunkhwa,<br>
-    Pakistan - 19130
+    <div class="meta">
+      <strong>Name:</strong> {{ $invoice->customer->name }}<br>
+      <strong>Contact:</strong> {{ $invoice->customer->mobile_no }}<br>
+      <strong>Shop/Room:</strong>
+      @foreach($invoice->customer->rooms() as $room)
+        {{ $room->no }}{{ !$loop->last ? ',' : '' }}
+      @endforeach <br>
+      <strong>Date:</strong> {{ \Carbon\Carbon::parse($invoice->created_at)->format("d-M-Y") }}
+    </div>
+
+    <table class="line-table">
+      <tr>
+        <th>Month</th>
+        <td>{{ $invoice->month }}-{{ $invoice->year }}</td>
+      </tr>
+      <tr>
+        <th>Monthly Rent</th>
+        <td>{{ $invoice->rent_amount }}</td>
+      </tr>
+      <tr>
+        <th>Previous Dues</th>
+        <td>{{ $invoice->dues }}</td>
+      </tr>
+      <tr>
+        <th>Total Paid</th>
+        <td>{{ $invoice->paid }}</td>
+      </tr>
+      <tr>
+        <th>Grand Total</th>
+        <td>{{ $invoice->total }}</td>
+      </tr>
+    </table>
+
+    <table class="line-table">
+      <tr>
+        <th>Payment Status</th>
+        <th colspan="2">Current Dues</th>
+      </tr>
+      <tr>
+        <td>{{ $invoice->status }}</td>
+        <td colspan="2" style="text-align: right;">{{ $invoice->remaining }}</td>
+      </tr>
+    </table>
+
+    <div class="urdu">
+      برائے کرم 5 تاریخ سے پہلے ادائیگی ادا کریں۔ شکریہ
+    </div>
+
+    <div class="footer">
+      Software developed by AppFlex Technology +9232-928-2424
+      <hr>
+    </div>
   </div>
 
-  <div class="meta">
-    <strong>Customer Name:</strong> {{ $invoice->customer->name }}<br>
-    <strong>Contact:</strong> {{ $invoice->customer->mobile_no }}<br>
-    <strong>Property:</strong>
-    @foreach($invoice->customer->rooms() as $room)
-    {{ $room->type }}-{{ $room->no }}{{ !$loop->last ? ',' : '' }}
-    @endforeach <br>
-    <strong>Date:</strong> {{ \Carbon\Carbon::parse($invoice->created_at)->format("d-M-Y") }}
-  </div>
-
-  <table class="line-table">
-    <tr>
-      <th>Month</th>
-      <td>{{ $invoice->month }}-{{ $invoice->year }}</td>
-    </tr>
-    <tr>
-      <th>Monthly Rent</th>
-      <td>{{ $invoice->rent_amount }}</td>
-    </tr>
-    <tr>
-      <th>Previous Dues</th>
-      <td>{{ $invoice->dues }}</td>
-    </tr>
-    <tr>
-      <th>Total paid</th>
-      <td>{{ $invoice->paid }}</td>
-    </tr>
-    <tr>
-      <th>Grand Total</th>
-      <td>{{ $invoice->remaining }}</td>
-    </tr>
-  </table>
-
-  <table class="line-table">
-    <tr>
-      <th>Payment Status</th>
-      <th>Payable Amount</th>
-      <th>Current Dues</th>
-    </tr>
-    <tr>
-      <td>{{ $invoice->status }}</td>
-      <td style="text-align: center; "></td>
-      <td style="text-align: right;"></td>
-    </tr>
-  </table>
-
-  <div class="urdu">
-    برائے کرم 5 تاریخ سے پہلے ادائیگی ادا کریں۔ شکریہ
-  </div>
-
-  <div class="footer">
-    Software developed by AppFlex Technology +9232-928-2424
-  </div>
-
-
-
-
-  
-      <script>
-    window.onload = function() {
-        window.print();
-
-        // This will trigger after user prints or cancels
-        window.onafterprint = function() {
-            // Check if the current URL matches the print invoice route pattern
-            const urlPattern = /\/invoice\/\d+\/print$/;
-
-            if (urlPattern.test(window.location.href)) {
-                // Redirect to POS index route after print dialog is closed
-                window.location.href = "{{ route('invoices.index') }}";
-            }
-        };
+  <script>
+    window.onload = function () {
+      window.print();
+      window.onafterprint = function () {
+        const urlPattern = /\/invoice\/\d+\/print$/;
+        if (urlPattern.test(window.location.href)) {
+          window.location.href = "{{ route('invoices.index') }}";
+        }
+      };
     };
-    </script>
+  </script>
 </body>
 </html>
-
-
-  
-
-
-

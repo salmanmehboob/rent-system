@@ -19,7 +19,14 @@ class InvoiceController extends Controller
         $buildings = Building::orderBy('name', 'asc')->get();
 
         if ($request->ajax()) {
-            $invoices = Invoice::with(['building', 'customer', 'agreement', 'transactions'])->get();
+            $invoices = Invoice::with([
+                'building',
+                'customer' => function ($query) {
+                    $query->withTrashed();
+                },
+                'agreement',
+                'transactions'
+            ])->get();
             return DataTables()->of($invoices)
                 ->addColumn('building', function ($invoice) {
                     return $invoice->building->name ?? 'N/A';

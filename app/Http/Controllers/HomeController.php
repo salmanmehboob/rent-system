@@ -6,9 +6,10 @@ use App\Models\Building;
 use App\Models\RoomShop;
 use App\Models\Customer;
 use App\Models\Invoice;
-
+use App\Models\Agreement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 
 class HomeController extends Controller
 {
@@ -29,10 +30,31 @@ class HomeController extends Controller
      */
     public function index()
     {
+
+        // Call the check:agreements command to check active and expired agreements
+        Artisan::call('check:agreements');
         $buildingsCount = Building::count();
         $roomhopsCount = RoomShop::count();
         $customersCount = Customer::count();
         $invoicesCount = Invoice::count();
+        // Get agreements that have expired (end_date < today)
+        $expiredAgreements = Agreement::with(['customer', 'roomShops'])
+            ->where('end_date', '<', now()->toDateString())
+            ->orderBy('end_date', 'desc')
+            ->get();
+
+        // Get agreements that are expiring in the current month
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+        $expiringThisMonth = Agreement::with(['customer', 'roomShops'])
+            ->whereMonth('end_date', $currentMonth)
+            ->whereYear('end_date', $currentYear)
+            ->where('end_date', '>=', now()->toDateString())
+            ->orderBy('end_date', 'asc')
+            ->get();
+
+        // Pass to dashboard view
+
 
         // Determine if print button should be shown (true if invoices exist)
         $canPrintInvoices = $invoicesCount > 0;
@@ -69,6 +91,7 @@ class HomeController extends Controller
                 ];
             });
 
+        // dd($topCustomers);
 
         return view('home', compact(
             'buildingsCount',
@@ -84,7 +107,9 @@ class HomeController extends Controller
             'paid',
             'invoices',
             'roomshops',
-            'topCustomers'
+                'topCustomers',
+            'expiredAgreements',
+            'expiringThisMonth'
         ));
     }
 

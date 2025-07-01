@@ -204,6 +204,80 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Expired Agreements</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered"  width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Customer Name</th>
+                                     <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($expiredAgreements as $agreement)
+                                    <tr>
+                                        <td>{{ $agreement->customer->name }}</td>
+                                         <td>{{ $agreement->start_date }}</td>   
+                                        <td>{{ $agreement->end_date }}</td>
+                                     @if($agreement->status === 'inactive')
+                                        <td><span class="badge badge-danger">Expired</span></td>
+                                    @else
+                                        <td>{{ $agreement->status }}</td>
+                                    @endif
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Expiring Agreements</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered"  width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Customer Name</th>
+                                     <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody> 
+                                @foreach ($expiringThisMonth as $agreement)
+                                    <tr>
+                                        <td>{{ $agreement->customer->name }}</td>
+                                         <td>{{ $agreement->start_date }}</td>   
+                                        <td>{{ $agreement->end_date }}</td> 
+                                     @if($agreement->status === 'active')
+                                        <td><span class="badge badge-success">Active</span></td>
+                                    @else
+                                        <td>{{ $agreement->status }}</td>  
+                                    @endif
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>  
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('js')

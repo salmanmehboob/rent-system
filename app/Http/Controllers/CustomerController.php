@@ -6,8 +6,10 @@ use App\Models\Customer;
 use App\Models\Building;
 use App\Models\RoomShop;
 use App\Models\Witness;
+use App\Models\Agreement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 
 class CustomerController extends Controller
@@ -69,18 +71,18 @@ class CustomerController extends Controller
                         : 'N/A';
                 })
                 // Witness section (show only first witness)
-                ->addColumn('witness_name', function ($customer) {
-                    return $customer->witnesses->first()->name ?? 'N/A';
-                })
-                ->addColumn('witness_mobile_no', function ($customer) {
-                    return $customer->witnesses->first()->mobile_no ?? 'N/A';
-                })
-                ->addColumn('witness_cnic', function ($customer) {
-                    return $customer->witnesses->first()->cnic ?? 'N/A';
-                })
-                ->addColumn('witness_address', function ($customer) {
-                    return $customer->witnesses->first()->address ?? 'N/A';
-                })
+                // ->addColumn('witness_name', function ($customer) {
+                //     return $customer->witnesses->first()->name ?? 'N/A';
+                // })
+                // ->addColumn('witness_mobile_no', function ($customer) {
+                //     return $customer->witnesses->first()->mobile_no ?? 'N/A';
+                // })
+                // ->addColumn('witness_cnic', function ($customer) {
+                //     return $customer->witnesses->first()->cnic ?? 'N/A';
+                // })
+                // ->addColumn('witness_address', function ($customer) {
+                //     return $customer->witnesses->first()->address ?? 'N/A';
+                // })
                 // Actions
                ->addColumn('actions', function ($customer) {
                     $agreement = $customer->agreements->first();
@@ -140,7 +142,11 @@ class CustomerController extends Controller
         if ($request->ajax()) {
             $validated = $request->validate([
                 'building_id' => 'required|exists:buildings,id',
-                'name' => 'required|string|max:255|unique:customers,name',
+                'name' => [
+                    'required',
+                    'string',
+                    Rule::unique('customers')->where('building_id', request('building_id')),
+                ],
                 'mobile_no' => 'required|string|max:15',
                 'cnic' => 'nullable|string|max:20',
                 'address' => 'nullable|string',
@@ -280,8 +286,7 @@ class CustomerController extends Controller
 
                     // Detach old room shops
                     $oldRoomShopIds = $agreement->roomShops()->pluck('room_shop_id')->toArray();
-// dd($oldRoomShopIds);
-
+ 
                     $agreement->roomShops()->detach();
 
                     RoomShop::whereIn('id', $oldRoomShopIds)->update([
@@ -340,11 +345,17 @@ class CustomerController extends Controller
 
 
 
-  public function destroy($id)
+    public function destroy($id)
     {
         try {
             $customer = Customer::findOrFail($id);
             $customer->delete();
+
+            RoomShop::where('customer_id', $customer->id)->update([
+                'customer_id' => null,
+                'availability' => 1,
+            ]);
+
             return response()->json(['success' => 'Customer deleted successfully.']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -376,12 +387,17 @@ class CustomerController extends Controller
         }));
     }
 
-
-
     public function showAgreement()
     {
         $title = "Set New Agreement";
-        $customers = Customer::orderBy('name', 'asc')->get();
+        // $customers = Customer::orderBy('name', 'asc')->get();
+        // Get customers whose agreements have expired
+        $expiredCustomerIds = Agreement::where('end_date', '<', now())
+            ->pluck('customer_id')
+            ->unique();
+
+            // dd($expiredCustomerIds);
+            $customers = Customer::whereIn('id', $expiredCustomerIds)->orderBy('name', 'asc')->get();
         $rooms = RoomShop::orderBy('no', 'asc')->get();
 
         return view('customers.agreements', compact('title', 'customers', 'rooms'));

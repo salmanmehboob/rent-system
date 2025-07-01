@@ -3,7 +3,15 @@
 
 @section('content')
 <div style="max-height: 500px; overflow-y: auto; overflow-x:hidden;">
-    <div class="row" >
+    
+     <div class="row mb-3">
+        <div class="col-md-12">
+            <button id="addCustomerBtn" class="btn btn-success">Add Customer</button>   
+            <button id="viewCustomerBtn" class="btn btn-primary d-none">All Customers</button>  
+        </div>
+    </div>
+
+     <div class="row d-none" id="customerFormDiv" >
         <div class="col-md-10 mx-5">
             <div class="card">
                 <div class="card-header">
@@ -12,12 +20,12 @@
                 <div class="card-body">
                     <form class="ajax-form" id="customerForm" data-table="customersTable" action="{{ route('customers.store') }}" method="POST">
                         @csrf
-    
+
                         <div class="row">
                             <div class="col-md-5 mx-5">
                                 <div class="form-group mb-2">
                                     <label>Building  <span class="text-danger">*</span></label>
-                                    <select name="building_id" id="building_id" class=" form-control single-select-placehoder select2">
+                                    <select name="building_id" id="building_id" class=" form-control single-select-placehoder select2" style="width: 100%;">
                                         <option value="" disabled selected> Select a Building </option>
                                         @foreach ($buildings as $building)
                                             <option value="{{ $building->id }}">{{ $building->name }}</option>
@@ -53,7 +61,7 @@
                                 </div>
 
                                 <div class="form-group mb-2">
-                                    <input type="hidden" name="status" id="status"> 
+                                    <input type="hidden" name="status" id="status">
                                 </div>
                             </div>
                         </div>
@@ -65,7 +73,7 @@
                             <div class="col-md-5 mx-5">
                                 <div class="form-group mb-2">
                                     <label>Property: <span class="text-danger">*</span></label>
-                                    <select name="room_shop_id[]" class="form-control select2-multiple" multiple id="room_shop_id">
+                                    <select name="room_shop_id[]" class="form-control select2-multiple" multiple id="room_shop_id" style="width: 100%;">
                                         <!-- This will be filled dynamically with rooms based on selected building -->
                                     {{-- / <option value="">Select Room or Shop</option> --}}
                                     </select>
@@ -84,7 +92,7 @@
                                     <div id="end_dateError" class="text-danger mt-1"></div>
                                 </div>
                             </div>
-                        
+
                             <div class="col-md-5">
                                 <div class="form-group mb-2">
                                     <label>Duration (months) <span class="text-danger">*</span></label>
@@ -126,7 +134,7 @@
                             </div>
                             <button data-repeater-create type="button" class="btn btn-primary float-start btn-sm mb-3">Add Witness</button>
                         </div>
-            
+
                         <button type="submit" id="submitBtn" class="btn btn-primary submit-btn px-4">Save</button>
                         <button type="button" id="cancelBtn" class="btn btn-secondary float-end me-2 d-none">Cancel Update</button>
                     </form>
@@ -137,7 +145,7 @@
 
  <hr>
 
-    <div class="row" style="max-height: 500px; overflow-y: auto;">
+    <div class="row">
         <div class="col-md-12 my-4">
             <div class="card">
                 <div class="card-header">
@@ -184,7 +192,7 @@
 @endsection
 @push('js')
 <script>
-    //picks rooms or shops on seleted building 
+    //picks rooms or shops on seleted building
     $('#building_id').on('change', function () {
         const buildingId = $(this).val();
 
@@ -195,7 +203,7 @@
         }
     });
 
-    
+
     function loadDependentDropdown(url, parentId, childSelectId, selectedId = null, defaultText = 'Select', parentKey, selectedRoomShopId = null) {
         if (!parentKey) return;
 
@@ -240,10 +248,10 @@
             $('#duration').val(months);
         }
     });
-    
+
     //Ready fucntion start
     $(document).ready(function() {
-       
+
         $('#customersTable').DataTable({
             processing: true,
             serverSide: true,
@@ -268,8 +276,8 @@
                 { data: 'actions', name: 'actions', orderable: false, searchable: false },
             ]
         });
-         
-        // Edit button 
+
+        // Edit button
         $(document).on('click', '#editBtn', function(e) {
             e.preventDefault();
             // For debugging - check the form data structure
@@ -290,7 +298,7 @@
             const roomShopId = $(this).data('room_shop_id');
             $form.find('select[name="building_id"]').val(buildingId).trigger('change');
             // Load room/shop dropdown and select value
-           
+
             setTimeout(() => {
                 loadDependentDropdown('/roomshop-by-building', buildingId, 'room_shop_id', roomShopId, 'Select Room or Shop', 'building_id', roomShopId );// this will trigger edit behavior
             }, 300);
@@ -310,7 +318,7 @@
                         <div data-repeater-item>
                             <div class="row">
                                 <div class="col-md-5 mx-5">
-                                    <input type="hidden" name="witnesses[${index}][id]" value="${witness.id}"> 
+                                    <input type="hidden" name="witnesses[${index}][id]" value="${witness.id}">
                                     <input type="text" name="witnesses[${index}][name]" value="${witness.name}" placeholder="Name" class="form-control mb-2">
                                     <input type="text" name="witnesses[${index}][mobile_no]" value="${witness.mobile_no}" placeholder="Mobile No" class="form-control mb-2">
                                     <button data-repeater-delete type="button" class="btn btn-danger btn-sm">Delete</button>
@@ -340,7 +348,7 @@
             $form.find('select').val(null).trigger('change');
             $('#submitBtn').text('Save');
             $(this).addClass('d-none');
-            
+
             // Reset witnesses with correct naming structure
             $('#witnessRepeater [data-repeater-list]').html(`
                 <div data-repeater-item>
@@ -359,6 +367,10 @@
                 </div>
             `);
             $('#customersTable').DataTable().ajax.reload(null, false);
+
+            $('#customerFormDiv').addClass('d-none');
+            $('.card:has(#customersTable)').parent().parent().removeClass('d-none'); // Show the list card
+            $('#addCustomerBtn').removeClass('d-none'); // Show the add button
         });
 
         // Initialize repeater (correct placement)
@@ -374,7 +386,7 @@
                 $(this).slideDown();
                 const item = $(this);
                 const index = item.parent('[data-repeater-list]').children('[data-repeater-item]').length - 1;
-                
+
                 item.find('[name="name"]').attr('name', `witnesses[0][name]`);
                 item.find('[name="mobile_no"]').attr('name', `witnesses[0][mobile_no]`);
                 item.find('[name="cnic"]').attr('name', `witnesses[0][cnic]`);
@@ -393,8 +405,24 @@
                 }, 300);
             }
         });
-        
 
+        // Add Customer button click handler
+        $('#addCustomerBtn').on('click', function(e) {
+            e.preventDefault();
+            $('#customerFormDiv').removeClass('d-none');
+            $('.card:has(#customersTable)').parent().parent().addClass('d-none'); // Hide the list card
+            $(this).addClass('d-none'); // Hide the add button
+            $('#viewCustomerBtn').removeClass('d-none'); // Show the view button        
+        });
+
+        // View Customer button click handler   
+        $('#viewCustomerBtn').on('click', function(e) {
+            e.preventDefault();
+            $('#customerFormDiv').addClass('d-none');
+            $('.card:has(#customersTable)').parent().parent().removeClass('d-none'); // Show the list card  
+            $('#addCustomerBtn').removeClass('d-none'); // Show the add button
+            $('#viewCustomerBtn').addClass('d-none'); // Hide the view button   
+        });
     });
-</script>
+</script>   
 @endpush

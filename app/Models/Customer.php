@@ -32,23 +32,7 @@ class Customer extends Model
             $q->where('customer_id', $this->id)->where('status', 'active');
         })->get();
     }
-
-
-    // public function rooms()
-    // {
-    //     $roomIds = $this->agreements()
-    //         ->where('status', 'active')
-    //         ->pluck('room_shop_ids')
-    //         ->filter()
-    //         ->flatMap(function ($json) {
-    //             return json_decode($json, true);
-    //         })->unique()->values();
-
-    //     return RoomShop::whereIn('id', $roomIds)
-    //         ->where('availability', 0)
-    //         ->get();
-    // }
-
+ 
 
     public function agreements()
     {

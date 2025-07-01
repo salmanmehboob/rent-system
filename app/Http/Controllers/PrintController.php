@@ -8,9 +8,15 @@ class PrintController extends Controller
 {
     public function printInvoice($id)
     {
-        $invoice = Invoice::findOrFail($id);
+        $invoice = Invoice::with('customer.building')->where('id', $id)->first();
+        // Eager load customer, their rooms/shops, and building details
+        
+         // Ensure $invoice is not null and is a single model, not a collection
+        if (!$invoice) {
+            return redirect()->back()->with('error', 'Invoice not found.');
+        }
 
-        return view('prints.index', compact('invoice'));
+         return view('prints.index', compact('invoice'));
     }
 
 

@@ -143,52 +143,59 @@ class ReportController extends Controller
 
 
     // -------------------------------
-   public function getDuesReports(Request $request)
+
+    public function getDuesReports(Request $request)
     {
         if ($request->ajax()) {
-           $invoices = Invoice::select('invoices.*')
-            ->with(['agreement.roomShops.building', 'agreement.customer'])
-            ->where('invoices.remaining', '>', 0)
-            ->whereRaw('invoices.id = (
-                SELECT MAX(id) FROM invoices as i2
-                WHERE i2.agreement_id = invoices.agreement_id
-            )');
 
-
-                if (empty($request->building_id) && empty($request->room_shop_id)) {
-                    return response()->json([
-                        'data' => [],
-                        'recordsTotal' => 0,
-                        'recordsFiltered' => 0
-                    ]);
-                }
-
-
-            if ($request->building_id) {
-                $invoices->whereHas('agreement.roomShops', function ($query) use ($request) {
-                    $query->where('room_shops.building_id', $request->building_id); // Specify table
-                });
+            if (empty($request->building_id) && empty($request->customer_id)) {
+                return response()->json([
+                    'data' => [],
+                    'recordsTotal' => 0,
+                    'recordsFiltered' => 0
+                ]);
             }
 
-            if ($request->room_shop_id) {
-                $invoices->whereHas('agreement.roomShops', function ($query) use ($request) {
-                    $query->where('room_shops.id', $request->room_shop_id); // Specify table
+            $invoices = Invoice::select('invoices.*')
+                ->with(['agreement.roomShops.building', 'agreement.customer'])
+                ->where('invoices.remaining', '>', 0)
+                ->whereRaw('invoices.id = (
+                    SELECT MAX(id) FROM invoices as i2
+                    WHERE i2.agreement_id = invoices.agreement_id
+                )')
+                ->whereHas('agreement.customer', function ($query) use ($request) {
+                    if ($request->building_id) {
+                        $query->where('building_id', $request->building_id);
+                    }
+                    if ($request->customer_id) {
+                        $query->where('id', $request->customer_id);
+                    }
+                })
+                ->get()
+                ->groupBy(function ($invoice) {
+                    return $invoice->agreement->customer->id;
                 });
-            }
 
-            return DataTables::of($invoices)
-                ->addColumn('building', function ($invoice) {
-                    return optional($invoice->agreement->roomShops->first()->building)->name ?? 'N/A';
+            // NOW use collection mode (not server-side)
+            return DataTables::of($invoices->values()) // `->values()` resets keys for DT
+                ->addColumn('building', function ($group) {
+                    return optional($group->first()->agreement->roomShops->first()->building)->name ?? 'N/A';
                 })
-                ->addColumn('customer', function ($invoice) {
-                    return $invoice->agreement->customer->name ?? 'N/A';
+                ->addColumn('customer', function ($group) {
+                    $customer = $group->first()->agreement->customer;
+                    return $customer ? $customer->name . ' (' . $customer->mobile_no . ')' : 'N/A';
                 })
-                ->addColumn('property', function ($invoice) {
-                    $roomShop = $invoice->agreement->roomShops->first();
-                    return $roomShop ? $roomShop->type . ' - ' . $roomShop->no : 'N/A';
+                ->addColumn('properties', function ($group) {
+                    $rooms = [];
+                    foreach ($group as $invoice) {
+                        foreach ($invoice->agreement->roomShops as $room) {
+                            $rooms[] = $room->type . ' - ' . $room->no;
+                        }
+                    }
+                    return implode(', ', array_unique($rooms));
                 })
-                ->addColumn('total_dues', function($invoice) {
-                    return $invoice->remaining;
+                ->addColumn('total_dues', function ($group) {
+                    return $group->sum('remaining');
                 })
                 ->make(true);
         }
@@ -201,19 +208,20 @@ class ReportController extends Controller
 
 
 
+
     public function getByBuilding(Request $request)
     {
         $buildingId = $request->building_id;
 
         // Get all rooms/shops for the selected building
-        $rooms = RoomShop::where('building_id', $buildingId)
-            ->get(['id', 'type', 'no']);
+        $customers = Customer::where('building_id', $buildingId)
+            ->get(['id', 'name', 'mobile_no']);
 
         // Format each room/shop for display
-        return response()->json($rooms->map(function ($room) {
+        return response()->json($customers->map(function ($customer) {
             return [
-                'id' => $room->id,
-                'name' => $room->type . ' - ' . $room->no
+                'id' => $customer->id,
+                'name' => $customer->name . ' - ' . $customer->mobile_no
             ];
         }));
     }
