@@ -34,9 +34,24 @@ class InvoiceController extends Controller
                     } elseif ($invoice->status === 'Unpaid') {
                         $statusText = 'Unpaid';
                         $badgeClass = 'badge-danger';
-                    } else {
+                    } elseif ($invoice->status === 'Partially Paid') {
                         $statusText = 'Partially Paid';
                         $badgeClass = 'badge-warning';
+                    } else {
+                        $statusText = 'Dues Adjusted';
+                        $badgeClass = 'badge-info';
+                    }
+
+                    return '<span class="badge ' . $badgeClass . '">' . $statusText . '</span>';
+                })
+
+                 ->addColumn('type', function ($invoice) {
+                    if ($invoice->type === 'Current') {
+                        $statusText = 'Current';
+                        $badgeClass = 'badge-success';
+                    } else {
+                        $statusText = 'Previous';
+                        $badgeClass = 'badge-danger';
                     }
 
                     return '<span class="badge ' . $badgeClass . '">' . $statusText . '</span>';
@@ -44,58 +59,51 @@ class InvoiceController extends Controller
                 ->addColumn('actions', function ($invoice) {
                     $buttons = '<div class="d-flex">';
 
-                    // Show Print button only if remaining > 0
-                    if ($invoice->remaining > 0) {
-                        $buttons .= '
+                       $buttons .= '
                             <a href="' . route('print', $invoice->id) . '"
                             target="_blank"
                             class="btn btn-secondary shadow btn-sm sharp mx-2"
                             title="Print Invoice"><i class="fa fa-print"></i></a>
+                            ';
+                    // Show Print button only if remaining > 0
+                    if ($invoice->type === 'Current') {
+                        if($invoice->remaining > 0) {
+                            $buttons .= '
 
-                            <a href="#" 
-                            class="btn btn-primary shadow btn-sm sharp me-1 payNowBtn"
-                            data-url="' . route('invoices.update', $invoice->id) . '"
+                                <a href="#" 
+                                class="btn btn-primary shadow btn-sm sharp me-1 payNowBtn"
+                                data-url="' . route('invoices.update', $invoice->id) . '"
+                                data-id="' . $invoice->id . '"
+                                data-name="' . $invoice->customer->name . '"
+                                data-month="' . $invoice->month . '"
+                                data-year="' . $invoice->year . '"
+                                data-rent_amount="' . $invoice->rent_amount . '"
+                                data-paid="' . $invoice->paid . '"
+                                data-dues="' . $invoice->dues . '"
+                                data-remaining="' . $invoice->remaining . '">
+                                <i class="fas fa-credit-card"></i>
+                                </a>
+                            ';
+
+                        }
+                       
+
+
+                        $buttons .='<a href="javascript:void(0)"
+                            data-url="' . route('invoices.transactions', $invoice->id) . '"
+                            class="btn btn-primary shadow btn-sm sharp mx-2 transactionHistoryBtn"
                             data-id="' . $invoice->id . '"
-                            data-name="' . $invoice->customer->name . '"
-                            data-month="' . $invoice->month . '"
-                            data-year="' . $invoice->year . '"
-                            data-rent_amount="' . $invoice->rent_amount . '"
-                            data-paid="' . $invoice->paid . '"
-                            data-remaining="' . $invoice->remaining . '"
-                            >
-                            <i class="fas fa-credit-card"></i>
-                            </a>
+                            data-name="' . $invoice->customer->name . '">
+                            <i class="fa fa-history"></i></a>
                         ';
                     }
-
-                    // Delete button (always shown)
-                    $buttons .= '
-                        <a href="javascript:void(0)"
-                        data-url="' . route('invoices.destroy', $invoice->id) . '"
-                        data-label="delete"
-                        data-id="' . $invoice->id . '"
-                        data-table="invoicesTable"
-                        class="btn btn-danger shadow btn-sm sharp delete-record"
-                        style="margin-left:0.5rem;"
-                        title="Delete Record"><i class="fa fa-trash"></i></a>
-                    ';
-
-                    // Transaction History button (always shown)
-                    $buttons .= '
-                        <a href="javascript:void(0)"
-                        data-url="' . route('invoices.transactions', $invoice->id) . '"
-                        class="btn btn-primary shadow btn-sm sharp mx-2 transactionHistoryBtn"
-                        data-id="' . $invoice->id . '"
-                        data-name="' . $invoice->customer->name . '">
-                        <i class="fa fa-history"></i></a>
-                    ';
 
                     $buttons .= '</div>';
 
                     return $buttons;
                 })
 
-            ->rawColumns(['status', 'actions'])
+            ->rawColumns(['status', 'type', 'actions'])
             ->make(true);
         }
 
@@ -109,11 +117,11 @@ class InvoiceController extends Controller
                 'building_id' => 'required|exists:buildings,id',
                 'customer_id' => 'required|exists:customers,id',
                 'month' => 'required|string',
-                'year' => 'required|integer',
+                'year' => 'required|string',
                 'rent_amount' => 'required|numeric',
                 'dues' => 'required|numeric',
                 'total' => 'required|numeric',
-                'status' => 'required|in:Unpaid,Paid,Partially Paid',
+                'status' => 'required|in:Unpaid,Paid,Partially Paid,Dues Adjusted',
             ]);
 
             try {
@@ -134,15 +142,56 @@ class InvoiceController extends Controller
                     ], 422);
                 }
 
-                $agreement = Customer::find($validatedData['customer_id'])?->agreements->first();
+                $customer = Customer::find($validatedData['customer_id']);
+
+                $agreement = Customer::find($validatedData['customer_id'])?->agreements()
+                ->where('status', 'active')
+                ->latest()
+                ->first();
 
                 if (!$agreement) {
-                    return response()->json(['error' => 'No active agreement found for this customer.'], 422);
+                    return response()->json([
+                        'errors' => [
+                            'global' => ['No active agreement found for '. $customer->name .'.']
+                        ]
+                    ], 422);
+
                 }
 
                 $validatedData['agreement_id'] = $agreement->id;
-                $validatedData['remaining'] = $validatedData['total'];
-                $validatedData['paid'] = $validatedData['paid'] ?? 0; 
+                $validatedData['remaining'] = $validatedData['dues'] + $validatedData['rent_amount'];
+                $validatedData['paid'] = $validatedData['paid'] ?? 0;
+
+
+                // Prepare the new invoice date
+                $newInvoiceDate = Carbon::createFromFormat('d-F-Y H:i:s', '01-' . $validatedData['month'] . '-' . $validatedData['year'] . ' 00:00:00');
+
+                $existingInvoices = Invoice::where('customer_id', $validatedData['customer_id'])->get();
+
+                if ($existingInvoices->count()) {
+                    $latestInvoice = $existingInvoices->map(function ($invoice) {
+                        return [
+                            'model' => $invoice,
+                            'date' => Carbon::createFromFormat('d-F-Y H:i:s', '01-' . $invoice->month . '-' . $invoice->year . ' 00:00:00'),
+                        ];
+                    })->sortByDesc('date')->first();
+
+                    // If the new one is newer
+                    if ($newInvoiceDate->gt($latestInvoice['date'])) {
+                        $validatedData['type'] = 'Current';
+
+                        // Update all existing invoices of this customer to 'Previous'
+                        Invoice::where('customer_id', $validatedData['customer_id'])
+                            ->where('type', 'Current')
+                            ->update(['type' => 'Previous', 'status' => 'Dues Adjusted']);
+                    } else {
+                        $validatedData['type'] = 'Previous';
+                    }
+                } else {
+                    // First invoice for this customer
+                    $validatedData['type'] = 'Current';
+                }
+
 
                 // dd($validatedData);
                  $invoice = Invoice::create($validatedData);
@@ -173,7 +222,7 @@ class InvoiceController extends Controller
         $validatedData = $request->validate([
             'building_id' => 'required|exists:buildings,id',
             'month' => 'required|string',
-            'year' => 'required|integer',
+            'year' => 'required|string',
         ]);
 
         try {
@@ -227,6 +276,7 @@ class InvoiceController extends Controller
                     $skippedCount++;
                     continue;
                 }
+                
 
                 // Calculate rent amount
                 $roomCount = $agreement->roomShops->count();
@@ -242,6 +292,33 @@ class InvoiceController extends Controller
                 $previousDues = $lastInvoice ? $lastInvoice->remaining : 0;
                 $total = $rentAmount + $previousDues;
 
+                // check existing
+                $newInvoiceDate = Carbon::createFromFormat('d-F-Y H:i:s', '01-' . $validatedData['month'] . '-' . $validatedData['year'] . ' 00:00:00');
+
+                $existingInvoices = Invoice::where('customer_id', $customer->id)->get();
+
+                if ($existingInvoices->count()) {
+                    $latestInvoice = $existingInvoices->map(function ($invoice) {
+                        return [
+                            'model' => $invoice,
+                            'date' => Carbon::createFromFormat('d-F-Y H:i:s', '01-' . $invoice->month . '-' . $invoice->year . ' 00:00:00'),
+                        ];
+                    })->sortByDesc('date')->first();
+
+                    if ($newInvoiceDate->gt($latestInvoice['date'])) {
+                        $type = 'Current';
+
+                        Invoice::where('customer_id', $customer->id)
+                            ->where('type', 'Current')
+                            ->update(['type' => 'Previous', 'status' => 'Dues Adjusted']);
+                    } else {
+                        $type = 'Previous';
+                    }
+                } else {
+                    $type = 'Current';
+                }
+
+
                 // Create the invoice with proper values
                 Invoice::create([
                     'building_id'     => $validatedData['building_id'],
@@ -254,8 +331,9 @@ class InvoiceController extends Controller
                     'paid'            => 0, // Default to 0 for new invoices
                     'total'           => $total,
                     'remaining'       => $total, // Initially remaining equals total
-                    'status'          => 'Unpaid', // Default status
-                    'is_active'      => true,
+                    'type'            => $type,
+                    'status'          => $type === 'Previous' ? 'Dues Adjusted' : 'Unpaid',
+                    'is_active'       => true,
                 ]);
 
                 $insertedCount++;
@@ -267,7 +345,13 @@ class InvoiceController extends Controller
                 return redirect()->back()->with('custom_error', 'No new bills generated. All customers already have invoices for this period.');
             }
 
-            return redirect()->route('bills')->with('custom_success', "{$insertedCount} bills generated successfully. {$skippedCount} customers skipped (already had invoices).");
+           $message = "{$insertedCount} bills generated successfully.";
+            if ($skippedCount > 0) {
+                $message .= " {$skippedCount} customers skipped (already had invoices).";
+            }
+
+            return redirect()->route('bills')->with('custom_success', $message);
+
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -296,11 +380,12 @@ class InvoiceController extends Controller
                 $remaining = $invoice->remaining - $paidAmount;
                 $remaining = $remaining < 0 ? 0 : $remaining;
 
+                $rentDues = $invoice->rent_amount + $invoice->dues;
              
                  // Determine new status
                 if ($remaining == 0) {
                     $status = 'Paid';
-                } elseif ($remaining < $invoice->dues) {
+                } elseif ($remaining < $rentDues) {
                     $status = 'Partially Paid';
                 } else {
                     $status = 'Unpaid';
@@ -310,6 +395,10 @@ class InvoiceController extends Controller
                 $invoice->remaining = $remaining;
                 $invoice->status = $status;
                 $invoice->paid += $paidAmount;
+                // If fully paid, reset dues
+                if ($remaining == 0) {
+                    $invoice->dues = 0;
+                }
                 $invoice->save();
 
 
@@ -339,19 +428,7 @@ class InvoiceController extends Controller
      }
 
 
-    public function destroy($id)
-    {
-        try {
-            $invoice = Invoice::findOrFail($id);
-            $invoice->delete();
-            return response()->json(['success' => 'Invoice deleted successfully.']);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to delete invoice.', 
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
+
 
     public function getByBuilding(Request $request)
     {
@@ -379,14 +456,16 @@ class InvoiceController extends Controller
             $monthlyRent = $agreement->monthly_rent ?? 0;
             $totalRent = $monthlyRent * $roomCount;
             
-            $totalDues = $customer->invoices->sum('remaining');
-            $totalPaid = $customer->invoices->sum('paid');
+            // $latestInvoice = $customer->invoices()->latest()->first();
+            // $totalDues = $latestInvoice?->dues ?? 0;
+            $latestInvoice = $customer->invoices()->latest()->first();
+            $dues = $latestInvoice?->remaining ?? 0;
  
             return [
                 'id' => $customer->id,
                 'name' => $customer->name,
                 'rent_amount' => $totalRent,
-                'dues' => $totalDues,
+                'dues' => $dues,
             ];
         })->values();
 
@@ -396,10 +475,17 @@ class InvoiceController extends Controller
 
     public function getTransactions($id)
     {
-        $invoice = Invoice::with('transactions.invoice.customer')->find($id);
+        $invoice = Invoice::with('customer')->find($id);
+
+        // Get all transactions for the same customer, across all invoices
+        $transactions = Transaction::with('invoice.customer')
+            ->whereHas('invoice', function ($query) use ($invoice) {
+               $query->where('customer_id', $invoice->customer_id);
+            })
+            ->get();
 
         return response()->json([
-            'transactions' => $invoice->transactions
+            'transactions' => $transactions
         ]);
     }
 

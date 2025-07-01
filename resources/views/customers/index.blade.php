@@ -2,183 +2,183 @@
 @section('title', $title)
 
 @section('content')
-<div class="row">
-    <div class="col-md-10 mx-5">
-        <div class="card">
-            <div class="card-header">
-                <h4>{{ $title}} Form</h4>
-            </div>
-            <div class="card-body">
-                <form class="ajax-form" id="customerForm" data-table="customersTable" action="{{ route('customers.store') }}" method="POST">
-                    @csrf
- 
-                    <div class="row">
-                        <div class="col-md-5 mx-5">
-                            <div class="form-group mb-2">
-                                <label>Building  <span class="text-danger">*</span></label>
-                                <select name="building_id" id="building_id" class=" form-control single-select-placehoder select2">
-                                    <option value="" disabled selected> Select a Building </option>
-                                    @foreach ($buildings as $building)
-                                        <option value="{{ $building->id }}">{{ $building->name }}</option>
-                                    @endforeach
-                                </select>
-                                <div id="building_idError" class="text-danger mt-1"></div>
-                            </div>
-
-                            <div class="form-group mb-2">
-                                <label for="name">Name: <span class="text-danger">*</span></label>
-                                <input type="text" name="name" id="name" class="form-control" placeholder="Customer name">
-                                <div id="nameError" class="text-danger mt-1"></div>
-                            </div>
-
-                            <div class="form-group mb-2">
-                                <label for="mobile_no">Mobile No: <span class="text-danger">*</span></label>
-                                <input type="text" name="mobile_no" id="mobile_no" class="form-control" placeholder="Mobile Number">
-                                <div id="mobile_noError" class="text-danger mt-1"></div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-5">
-                            <div class="form-group mb-2">
-                                <label for="cnic">CNIC No: <span class="text-danger">*</span></label>
-                                <input type="text" name="cnic" id="cnic" class="form-control" placeholder="CNIC No">
-                                <div id="cnicError" class="text-danger mt-1"></div>
-                            </div>
-
-                            <div class="form-group mb-2">
-                                <label for="address">Address: <span class="text-danger">*</span></label>
-                                <input type="text" name="address" id="address" class="form-control" placeholder="Address">
-                                <div id="addressError" class="text-danger mt-1"></div>
-                            </div>
-
-                            <div class="form-group mb-2">
-                                <input type="hidden" name="status" id="status"> 
-                            </div>
-                        </div>
-                    </div>
-                    <hr>
-
-                    {{-- Agreement Section --}}
-                    <h4> Customer Agreement:</h4>
-                    <div class="row">
-                        <div class="col-md-5 mx-5">
-                            <div class="form-group mb-2">
-                                <label>Room/Shop No: <span class="text-danger">*</span></label>
-                                <select name="room_shop_id[]" class="form-control select2-multiple" multiple id="room_shop_id">
-                                    <!-- This will be filled dynamically with rooms based on selected building -->
-                                   {{-- / <option value="">Select Room or Shop</option> --}}
-                                </select>
-                                <div id="room_shop_idError" class="text-danger mt-1"></div>
-                            </div>
-
-                            <div class="form-group mb-2">
-                                <label>Start Date</label>
-                                <input type="date" name="start_date" class="form-control" id="start_date">
-                                <div id="start_dateError" class="text-danger mt-1"></div>
-                            </div>
-
-                            <div class="form-group mb-2">
-                                <label>End Date</label>
-                                <input type="date" name="end_date" class="form-control" id="end_date">
-                                <div id="end_dateError" class="text-danger mt-1"></div>
-                            </div>
-                        </div>
-                    
-                        <div class="col-md-5">
-                            <div class="form-group mb-2">
-                                <label>Duration (months)</label>
-                                <input type="text" name="duration" class="form-control" id="duration" readonly>
-                                <div id="durationError" class="text-danger mt-1"></div>
-                            </div>
-
-                            <div class="form-group mb-2">
-                                <label>Monthly Rent</label>
-                                <input type="text" name="monthly_rent" id="monthly_rent" class="form-control">
-                                <div id="monthly_rentError" class="text-danger mt-1"></div>
-                            </div>
-
-                            <!-- Hidden status field -->
-                            <input type="hidden" name="status" value="active">
-                        </div>
-                    </div>
-                    <hr>
-
-                    {{-- Witness Section --}}
-                    <h4>Witness Details</h4>
-                    <div id="witnessRepeater">
-                        <div data-repeater-list="witnesses">
-                            <div data-repeater-item>
-                                <div class="row">
-                                    <div class="col-md-5 mx-5">
-                                         <input type="text" name="name" placeholder="Name" class="form-control mb-2">
-                                         <input type="text" name="mobile_no" placeholder="Mobile No" class="form-control mb-2">
-                                         <button data-repeater-delete type="button" class="btn btn-danger btn-sm">Delete</button>
-                                    </div>
-
-                                    <div class="col-md-5">
-                                        <input type="text" name="cnic" placeholder="CNIC" class="form-control mb-2">
-                                        <input type="text" name="address" placeholder="Address" class="form-control mb-2">
-                                    </div>
+<div style="max-height: 500px; overflow-y: auto; overflow-x:hidden;">
+    <div class="row" >
+        <div class="col-md-10 mx-5">
+            <div class="card">
+                <div class="card-header">
+                    <h4>{{ $title}} Form</h4>
+                </div>
+                <div class="card-body">
+                    <form class="ajax-form" id="customerForm" data-table="customersTable" action="{{ route('customers.store') }}" method="POST">
+                        @csrf
+    
+                        <div class="row">
+                            <div class="col-md-5 mx-5">
+                                <div class="form-group mb-2">
+                                    <label>Building  <span class="text-danger">*</span></label>
+                                    <select name="building_id" id="building_id" class=" form-control single-select-placehoder select2">
+                                        <option value="" disabled selected> Select a Building </option>
+                                        @foreach ($buildings as $building)
+                                            <option value="{{ $building->id }}">{{ $building->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div id="building_idError" class="text-danger mt-1"></div>
                                 </div>
-                                <hr>
+
+                                <div class="form-group mb-2">
+                                    <label for="name">Name: <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" id="name" class="form-control" placeholder="Customer name">
+                                    <div id="nameError" class="text-danger mt-1"></div>
+                                </div>
+
+                                <div class="form-group mb-2">
+                                    <label for="mobile_no">Mobile No: <span class="text-danger">*</span></label>
+                                    <input type="text" name="mobile_no" id="mobile_no" class="form-control" placeholder="Mobile Number">
+                                    <div id="mobile_noError" class="text-danger mt-1"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-5">
+                                <div class="form-group mb-2">
+                                    <label for="cnic">CNIC No: <span class="text-danger">*</span></label>
+                                    <input type="text" name="cnic" id="cnic" class="form-control" placeholder="CNIC No">
+                                    <div id="cnicError" class="text-danger mt-1"></div>
+                                </div>
+
+                                <div class="form-group mb-2">
+                                    <label for="address">Address: <span class="text-danger">*</span></label>
+                                    <input type="text" name="address" id="address" class="form-control" placeholder="Address">
+                                    <div id="addressError" class="text-danger mt-1"></div>
+                                </div>
+
+                                <div class="form-group mb-2">
+                                    <input type="hidden" name="status" id="status"> 
+                                </div>
                             </div>
                         </div>
-                         <button data-repeater-create type="button" class="btn btn-primary float-start btn-sm mb-3">Add Witness</button>
-                    </div>
-        
-                    <button type="submit" id="submitBtn" class="btn btn-primary submit-btn px-4">Save</button>
-                    <button type="button" id="cancelBtn" class="btn btn-secondary float-end me-2 d-none">Cancel Update</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+                        <hr>
 
-<hr>
+                        {{-- Agreement Section --}}
+                        <h4> Customer Agreement:</h4>
+                        <div class="row">
+                            <div class="col-md-5 mx-5">
+                                <div class="form-group mb-2">
+                                    <label>Property: <span class="text-danger">*</span></label>
+                                    <select name="room_shop_id[]" class="form-control select2-multiple" multiple id="room_shop_id">
+                                        <!-- This will be filled dynamically with rooms based on selected building -->
+                                    {{-- / <option value="">Select Room or Shop</option> --}}
+                                    </select>
+                                    <div id="room_shop_idError" class="text-danger mt-1"></div>
+                                </div>
 
-<div class="row">
-    <div class="col-md-12 my-4">
-        <div class="card">
-            <div class="card-header">
-                <h4>{{$title}} List</h4>
-            </div>
-            <div class="card-body">
-                <div id="formError" class="alert alert-danger d-none"></div>
-                <div class="table-responsive">
-                    <table class="table table-bordered" id="customersTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>Id</th>
-                                <th>Building</th>
-                                <th>Name</th>
-                                <th>Mobile No</th>
-                                <th>CNIC No</th>
-                                <th>Address</th>
-                                <th>Status</th>
-                                {{-- Agreement Section --}}
-                                <th>Room/shop No</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Duration</th>
-                                <th>Monthly Rent</th>
-                                {{-- <th>Status</th> --}}
-                                {{-- Witness Section --}}
-                                <th>Name</th>
-                                <th>Mobile No</th>
-                                <th>CNIC</th>
-                                <th>Address</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+                                <div class="form-group mb-2">
+                                    <label>Start Date: <span class="text-danger">*</span></label>
+                                    <input type="date" name="start_date" class="form-control" id="start_date">
+                                    <div id="start_dateError" class="text-danger mt-1"></div>
+                                </div>
+
+                                <div class="form-group mb-2">
+                                    <label>End Date: <span class="text-danger">*</span></label>
+                                    <input type="date" name="end_date" class="form-control" id="end_date">
+                                    <div id="end_dateError" class="text-danger mt-1"></div>
+                                </div>
+                            </div>
+                        
+                            <div class="col-md-5">
+                                <div class="form-group mb-2">
+                                    <label>Duration (months) <span class="text-danger">*</span></label>
+                                    <input type="text" name="duration" class="form-control" id="duration" readonly>
+                                    <div id="durationError" class="text-danger mt-1"></div>
+                                </div>
+
+                                <div class="form-group mb-2">
+                                    <label>Monthly Rent: <span class="text-danger">*</span></label>
+                                    <input type="text" name="monthly_rent" id="monthly_rent" class="form-control">
+                                    <div id="monthly_rentError" class="text-danger mt-1"></div>
+                                </div>
+
+                                <!-- Hidden status field -->
+                                <input type="hidden" name="status" value="active">
+                            </div>
+                        </div>
+                        <hr>
+
+                        {{-- Witness Section --}}
+                        <h4>Witness Details</h4>
+                        <div id="witnessRepeater">
+                            <div data-repeater-list="witnesses">
+                                <div data-repeater-item>
+                                    <div class="row">
+                                        <div class="col-md-5 mx-5">
+                                            <input type="text" name="name" placeholder="Name" class="form-control mb-2">
+                                            <input type="text" name="mobile_no" placeholder="Mobile No" class="form-control mb-2">
+                                            <button data-repeater-delete type="button" class="btn btn-danger btn-sm">Delete</button>
+                                        </div>
+
+                                        <div class="col-md-5">
+                                            <input type="text" name="cnic" placeholder="CNIC" class="form-control mb-2">
+                                            <input type="text" name="address" placeholder="Address" class="form-control mb-2">
+                                        </div>
+                                    </div>
+                                    <hr>
+                                </div>
+                            </div>
+                            <button data-repeater-create type="button" class="btn btn-primary float-start btn-sm mb-3">Add Witness</button>
+                        </div>
+            
+                        <button type="submit" id="submitBtn" class="btn btn-primary submit-btn px-4">Save</button>
+                        <button type="button" id="cancelBtn" class="btn btn-secondary float-end me-2 d-none">Cancel Update</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
+ <hr>
 
+    <div class="row" style="max-height: 500px; overflow-y: auto;">
+        <div class="col-md-12 my-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4>{{$title}} List</h4>
+                </div>
+                <div class="card-body">
+                    <div id="formError" class="alert alert-danger d-none"></div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="customersTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Building</th>
+                                    <th>Name</th>
+                                    <th>Mobile</th>
+                                    <th>CNIC</th>
+                                    <th>Address</th>
+                                    <th>Status</th>
+                                    {{-- Agreement Section --}}
+                                    <th>Property</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Duration</th>
+                                    <th>Rent</th>
+                                    {{-- Witness Section --}}
+                                    <th>Name</th>
+                                    <th>Mobile</th>
+                                    <th>CNIC</th>
+                                    <th>Address</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
 </div>
 
 @endsection
@@ -213,7 +213,11 @@
             success: function (data) {
                 let options = `<option value="">${defaultText}</option>`;
                 data.forEach(item => {
-                    options += `<option value="${item.id}" ${selectedId == item.id ? 'selected' : ''}>${item.name}</option>`;
+                    const isSelected = Array.isArray(selectedId)
+                        ? selectedId.includes(item.id)
+                        : selectedId == item.id;
+
+                    options += `<option value="${item.id}" ${isSelected ? 'selected' : ''}>${item.name}</option>`;
                 });
                 $(`#${childSelectId}`).html(options).trigger('change');
             },
@@ -245,14 +249,13 @@
             serverSide: true,
             ajax: "{{ route('customers.index') }}",
             columns: [
-                { data: 'id', name: 'id' },
                 { data: 'building_name', name: 'building_name' },
                 { data: 'name', name: 'name' },
                 { data: 'mobile_no', name: 'mobile_no' },
                 { data: 'cnic', name: 'cnic' },
                 { data: 'address', name: 'address' },
                 { data: 'status', name: 'status' },
-                { data: 'room_shop_no', name: 'room_shop_no' },
+                { data: 'property', name: 'property' },
                 { data: 'start_date', name: 'start_date' },
                 { data: 'end_date', name: 'end_date' },
                 { data: 'duration', name: 'duration' },
@@ -287,7 +290,7 @@
             const roomShopId = $(this).data('room_shop_id');
             $form.find('select[name="building_id"]').val(buildingId).trigger('change');
             // Load room/shop dropdown and select value
-            // loadDependentDropdown('/roomshop-by-building', buildingId, 'room_shop_id', roomShopId, 'Select Room or Shop');
+           
             setTimeout(() => {
                 loadDependentDropdown('/roomshop-by-building', buildingId, 'room_shop_id', roomShopId, 'Select Room or Shop', 'building_id', roomShopId );// this will trigger edit behavior
             }, 300);

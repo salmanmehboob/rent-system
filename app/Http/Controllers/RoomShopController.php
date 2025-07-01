@@ -16,7 +16,7 @@ class RoomShopController extends Controller
 
     public function index(Request $request)
     {
-        $title = 'Rooms/Shops';
+        $title = 'Rooms Shops';
         $buildings = Building::orderBy('name', 'asc')->get();
 
         if ($request->ajax()) {
@@ -84,7 +84,7 @@ class RoomShopController extends Controller
               
             ]);
 
-                // 🧠 Custom uniqueness check: same building + type + number
+                //  Custom uniqueness check: same building + type + number
             $exists = RoomShop::where('building_id', $validatedData['building_id'])
                 ->where('type', $validatedData['type'])
                 ->where('no', $validatedData['no'])
@@ -98,6 +98,8 @@ class RoomShopController extends Controller
                 ], 422);
             }
 
+            $type = $validatedData['type'];
+            $no = $validatedData['no'];
             try {
                 // Start a database transaction
                 DB::beginTransaction(); 
@@ -109,11 +111,11 @@ class RoomShopController extends Controller
                 DB::commit();
 
 
-                return response()->json(['success' =>  'room/shop created successfully.', 'data' => $roomshop], 201);
+                return response()->json(['success' =>  $type.'-'.$no.' created successfully.', 'data' => $roomshop], 201);
             } catch (\Exception $e) {
                 // Rollback the transaction on error
                 DB::rollBack();
-                return response()->json(['success' =>  'Failed to create room/shop.', 'error' => $e->getMessage()], 500);
+                return response()->json(['success' =>  'Failed to create '.$type.'-'.$no.'.', 'error' => $e->getMessage()], 500);
             }
         }
 
@@ -151,11 +153,11 @@ class RoomShopController extends Controller
                 DB::commit();
 
 
-                return response()->json(['success' =>  'room/shop updated successfully.', 'data' => $roomshop], 201);
+                return response()->json(['success' =>  $type.'-'.$no.' updated successfully.', 'data' => $roomshop], 201);
             } catch (\Exception $e) {
                 // Rollback the transaction on error
                 DB::rollBack();
-                return response()->json(['success' =>  'Failed to update room/shop.', 'error' => $e->getMessage()], 500);
+                return response()->json(['success' =>  'Failed to update '.$type.'-'.$no.'.', 'error' => $e->getMessage()], 500);
             }
         }
 

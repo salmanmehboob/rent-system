@@ -36,17 +36,16 @@
 
                     <div class="form-group mb-2">
                         <label>Availability <span class="text-danger">*</span></label>
-                        <select name="availability" id="availability" class="form-control single-select-placeholder select2">
-                            <option value="">select option</option>
-                            <option value="1">Available</option>
+                        <select name="availability" id="availability" class=" form-control single-select-placeholder select2">
+                            <option value="1" selected>Available</option>
                             <option value="0" disabled>Unavailable</option>
                         </select>
                         <div id="availabilityError" class="text-danger mt-1"></div>
                     </div>
 
                     <div class="form-group mb-2">
-                        <label>Room/ Shop No <span class="text-danger">*</span></label>
-                        <input type="text" name="no" id="no" class="form-control" placeholder="room/shop no">
+                        <label>Room Shop No <span class="text-danger">*</span></label>
+                        <input type="text" name="no" id="no" class="form-control" placeholder="enter the number">
                         <div id="noError" class="text-danger mt-1"></div>
                     </div>
 
@@ -69,10 +68,8 @@
                     <table class="table table-bordered" id="roomshopsTable" width="100%" cellspacing="0">
                         <thead>
                             <tr>
-                                <th>ID</th>
                                 <th>Building</th>
-                                <th>Type</th>
-                                <th>Room/Shop No</th>
+                                <th>Property</th>
                                 <th>Availability</th>
                                 <th>Actions</th>
                             </tr>
@@ -94,10 +91,14 @@
                 serverSide: true,
                 ajax: "{{ route('roomshops.index') }}",
                 columns: [
-                    { data: 'id', name: 'id' },
                     { data: 'building', name: 'building' },
-                    { data: 'type', name: 'type' },
-                    { data: 'no', name: 'no' },
+                    {
+                        data: null,
+                        name: 'property',
+                        render: function (data, type, row) {
+                            return row.type + '-' + row.no;
+                        }
+                    },
                     { data: 'availability', name: 'availability' },
                     { data: 'actions', name: 'actions', orderable: false, searchable: false },
                 ]

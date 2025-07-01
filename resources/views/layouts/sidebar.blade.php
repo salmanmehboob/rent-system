@@ -35,7 +35,7 @@
             <li class="nav-item {{ Route::is('roomshops.index') ? 'active' : '' }}">
                 <a class="nav-link {{ Route::is('roomshops.index') ? 'active' : '' }}" href="{{route('roomshops.index')}}">
                     <i class="fas fa-store "></i>
-                    <span>Rooms/Shops</span></a>
+                    <span>Rooms Shops</span></a>
             </li>
 
             
@@ -59,6 +59,13 @@
                 <a class="nav-link {{ Route::is('bills') ? 'active' : '' }}" href="{{ route('bills') }}">
                     <i class="fas fa-receipt"></i>
                     <span>Generating Bills</span></a>
+            </li>
+
+             <!-- Nav Item - Tables -->
+            <li class="nav-item {{ Route::is('agreement.show') ? 'active' : '' }}">
+                <a class="nav-link {{ Route::is('agreement.show') ? 'active' : '' }}" href="{{ route('agreement.show') }}">
+                    <i class="fas fa-receipt"></i>
+                    <span>Agreements</span></a>
             </li>
 
                    <!-- Divider -->

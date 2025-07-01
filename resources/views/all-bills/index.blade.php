@@ -1,10 +1,7 @@
 @extends('layouts.app')
-@section('title')
+@section('title', $title)
     
-
-
-
-    @section('content')
+@section('content')
     @php
         $months = [
             'January', 'February', 'March', 'April', 'May', 'June',

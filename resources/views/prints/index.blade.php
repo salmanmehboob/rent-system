@@ -82,9 +82,9 @@
   <div class="meta">
     <strong>Customer Name:</strong> {{ $invoice->customer->name }}<br>
     <strong>Contact:</strong> {{ $invoice->customer->mobile_no }}<br>
-    <strong>Shop/Room:</strong>
+    <strong>Property:</strong>
     @foreach($invoice->customer->rooms() as $room)
-    {{ $room->no }}{{ !$loop->last ? ',' : '' }}
+    {{ $room->type }}-{{ $room->no }}{{ !$loop->last ? ',' : '' }}
     @endforeach <br>
     <strong>Date:</strong> {{ \Carbon\Carbon::parse($invoice->created_at)->format("d-M-Y") }}
   </div>
@@ -108,7 +108,7 @@
     </tr>
     <tr>
       <th>Grand Total</th>
-      <td>{{ $invoice->total }}</td>
+      <td>{{ $invoice->remaining }}</td>
     </tr>
   </table>
 
@@ -120,8 +120,8 @@
     </tr>
     <tr>
       <td>{{ $invoice->status }}</td>
-      <td style="text-align: center; ">{{ $invoice->payable_amount }}</td>
-      <td style="text-align: right;">{{ $invoice->current_dues }}</td>
+      <td style="text-align: center; "></td>
+      <td style="text-align: right;"></td>
     </tr>
   </table>
 

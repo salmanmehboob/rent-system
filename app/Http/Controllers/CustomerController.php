@@ -37,13 +37,18 @@ class CustomerController extends Controller
                     return '<span class="badge ' . $badgeClass . '">' . $statusText . '</span>';
                 })
                 // Agreement section (get first agreement only)
-                    ->addColumn('room_shop_no', function ($customer) {
+                ->addColumn('property', function ($customer) {
                     $agreement = optional($customer->agreements)->first();
 
-                    return $agreement && $agreement->roomShops->isNotEmpty()
-                        ? implode(', ', $agreement->roomShops->pluck('no')->toArray())
-                        : 'N/A';
+                    if ($agreement && $agreement->roomShops->isNotEmpty()) {
+                        return $agreement->roomShops->map(function ($shop) {
+                            return $shop->type . '-' . $shop->no;
+                        })->implode(', ');
+                    }
+
+                    return 'N/A';
                 })
+
 
                 ->addColumn('start_date', function ($customer) {
                     return $customer->agreements->first()->start_date ?? 'N/A';
@@ -52,10 +57,16 @@ class CustomerController extends Controller
                     return $customer->agreements->first()->end_date ?? 'N/A';
                 })
                 ->addColumn('duration', function ($customer) {
-                    return $customer->agreements->first()->duration ?? 'N/A';
+                    $agreement = $customer->agreements->first();
+                    return $agreement && $agreement->duration 
+                        ? $agreement->duration . ' months' 
+                        : 'N/A';
                 })
                 ->addColumn('monthly_rent', function ($customer) {
-                    return $customer->agreements->first()->monthly_rent ?? 'N/A';
+                    $agreement = $customer->agreements->first();
+                    return $agreement && $agreement->monthly_rent 
+                        ? 'Rs. ' . $agreement->monthly_rent 
+                        : 'N/A';
                 })
                 // Witness section (show only first witness)
                 ->addColumn('witness_name', function ($customer) {
@@ -74,6 +85,7 @@ class CustomerController extends Controller
                ->addColumn('actions', function ($customer) {
                     $agreement = $customer->agreements->first();
                     $roomNos = $roomNos = $agreement && $agreement->roomShops ? $agreement->roomShops->pluck('no')->toArray() : [];
+                    $type = $type = $agreement && $agreement->roomShops ? $agreement->roomShops->pluck('type')->toArray() : [];
                     $startDate = $agreement?->start_date ?? '';
                     $endDate = $agreement?->end_date ?? '';
                     $duration = $agreement?->duration ?? '';
@@ -88,6 +100,7 @@ class CustomerController extends Controller
                                 data-building="' . $customer->building_id . '"
                                 data-room_shop_id=\'' . json_encode($agreement?->roomShops->pluck('id')->toArray() ?? []) . '\'
                                 data-room_shop_no="' . implode(', ', $roomNos) . '"
+                                data-type="' . implode(', ', $type) . '"
                                 data-name="' . e($customer->name) . '"
                                 data-mobile_no="' . e($customer->mobile_no) . '"
                                 data-cnic="' . e($customer->cnic) . '"
@@ -213,10 +226,7 @@ class CustomerController extends Controller
     }
 
 
-    // public function edit(Customer $customer)
-    // {
-    //     return response()->json($customer);
-    // }
+
    public function update(Request $request, $id)
     {
         if ($request->ajax()) {
@@ -249,11 +259,11 @@ class CustomerController extends Controller
             try {
                 DB::beginTransaction();
 
-                $customer = Customer::findOrFail($id);
+
+                $customer = Customer::find($id);
 
                 // Update customer
                 $customer->update($request->only(['building_id', 'name', 'mobile_no', 'cnic', 'address', 'status']));
-
                 // Agreement update or create
                 $agreement = $customer->agreements()->first();
 
@@ -269,13 +279,17 @@ class CustomerController extends Controller
                     $agreement->update($agreementData);
 
                     // Detach old room shops
-                    $oldRoomShopIds = $agreement->roomShops()->pluck('id')->toArray();
+                    $oldRoomShopIds = $agreement->roomShops()->pluck('room_shop_id')->toArray();
+// dd($oldRoomShopIds);
+
                     $agreement->roomShops()->detach();
 
                     RoomShop::whereIn('id', $oldRoomShopIds)->update([
                         'customer_id' => null,
                         'availability' => 1,
                     ]);
+                    // dd($request->all());
+
                 } else {
                     $agreement = $customer->agreements()->create($agreementData);
                 }
@@ -291,7 +305,7 @@ class CustomerController extends Controller
                 // Sync witnesses
                 $witnessIds = [];
                 foreach ($request->witnesses as $witnessData) {
-                    $witness = \App\Models\Witness::updateOrCreate(
+                    $witness = Witness::updateOrCreate(
                         ['id' => $witnessData['id'] ?? null],
                         [
                             'name' => $witnessData['name'],
@@ -330,21 +344,7 @@ class CustomerController extends Controller
     {
         try {
             $customer = Customer::findOrFail($id);
-
-            // // Check if customer has related agreements
-            // if ($customer->agreements()->exists()) {
-            //     return response()->json([
-            //         'errors' => [ // <-- wrap global inside 'errors'
-            //             'global' => [
-            //                 'Customer cannot be deleted. Please delete related agreements and transactions first.'
-            //             ]
-            //         ]
-            //     ], 400);
-
-            // }
-
             $customer->delete();
-
             return response()->json(['success' => 'Customer deleted successfully.']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -363,8 +363,8 @@ class CustomerController extends Controller
                 $query->available(); // Use our new scope
                 
                 // Include currently selected room if editing
-                if ($selectedRoomShopId) {
-                    $query->orWhere('id', $selectedRoomShopId);
+                if (!empty($selectedRoomShopId)) {
+                    $query->orWhereIn('id', (array) $selectedRoomShopId);
                 }
             });
 
@@ -377,6 +377,75 @@ class CustomerController extends Controller
     }
 
 
+
+    public function showAgreement()
+    {
+        $title = "Set New Agreement";
+        $customers = Customer::orderBy('name', 'asc')->get();
+        $rooms = RoomShop::orderBy('no', 'asc')->get();
+
+        return view('customers.agreements', compact('title', 'customers', 'rooms'));
+    }
+
+
+
+
+    public function setAgreement(Request $request)
+    {
+        $validatedData = $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'room_shop_id' => 'required|array|min:1',
+            'room_shop_id.*' => 'exists:room_shops,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'duration' => 'required|string',
+            'monthly_rent' => 'required|string',
+        ]);
+
+       try {
+            DB::beginTransaction();
+
+                $customer = Customer::find($validatedData['customer_id']);
+
+                //  Check if the customer already has an active agreement
+                if ($customer->agreements()->where('status', 'active')->exists()) {
+                    DB::rollBack();
+                    return redirect()->back()->with('custom_error', $customer->name. ' already has an active agreement.');
+                }
+                // check for overlapping dates
+                $hasOverlap = $customer->agreements()
+                    ->where(function ($query) use ($validatedData) {
+                        $query->where('start_date', '<=', $validatedData['end_date'])
+                            ->where('end_date', '>=', $validatedData['start_date']);
+                    })->exists();
+
+                if ($hasOverlap) {
+                    return redirect()->back()->with('custom_error', 'change the date, becuase this is already in agreement which is inactive');
+                }
+
+                // Agreement create
+                $agreement = $customer->agreements()->create([
+                    'duration' => $validatedData['duration'],
+                    'monthly_rent' => $validatedData['monthly_rent'],
+                    'start_date' => $validatedData['start_date'],
+                    'end_date' => $validatedData['end_date'],
+                    'status' => 'active',
+                ]);
+                // Attach room shops to agreement and update availability
+                $agreement->roomShops()->attach($request->room_shop_id);
+
+                RoomShop::whereIn('id', $request->room_shop_id)->update([
+                    'customer_id' => $customer->id,
+                    'availability' => 0,
+                ]);    
+
+            DB::commit();
+                return redirect()->route('agreement.show')->with('custom_success', 'New agreement added to '. $customer->name .'.');
+       } catch (\Exception $e) {
+        DB::rollback();
+        return response()->json(['error' => $e->getMessage()], 500);
+       }
+    }
 
 }
 

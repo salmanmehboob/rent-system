@@ -13,6 +13,13 @@
     <title>Admin Dashboard</title>
 
     @include('layouts.header_files')
+
+    {{-- <style>
+        html, body {
+            overflow: hidden !important;
+            height: 100%;
+        }
+    </style> --}}
  
 </head>
 

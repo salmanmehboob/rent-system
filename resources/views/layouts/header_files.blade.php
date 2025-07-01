@@ -31,3 +31,12 @@
 {{-- style for export buttons --}}
 <link rel="stylesheet" href="{{ asset('assets/vendor/export-buttons/css/buttons.dataTables.min.css') }}">
 
+<!-- amCharts 5 CDN -->
+<script src="{{ asset('assets/vendor/amchart/index.js') }}"></script>
+<script src="{{ asset('assets/vendor/amchart/percent.js') }}"></script>
+<script src="{{ asset('assets/vendor/amchart/Animated.js') }}"></script>
+
+<!-- ✅ amCharts XY module (for bar/column charts) -->
+<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+
+
