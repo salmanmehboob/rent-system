@@ -21,13 +21,17 @@ class CustomerController extends Controller
 
         if ($request->ajax()) {
             // Proper eager loading
-                        $customers = Customer::with([
-                    'building',
-                    'agreements' => function ($query) {
-                        $query->where('status', 'active')->latest()->with('roomShops'); // <- ADD THIS
-                    },
-                    'witnesses'
-                ])->get();
+            $query = Customer::with([
+                'building',
+                'agreements' => function ($query) {
+                    $query->where('status', 'active')->latest()->with('roomShops');
+                },
+                'witnesses'
+            ]);
+            if ($request->has('building_id') && $request->building_id) {
+                $query->where('building_id', $request->building_id);
+            }
+            $customers = $query->get();
 
             return DataTables()->of($customers)
                 ->addColumn('building_name', function ($customer) {

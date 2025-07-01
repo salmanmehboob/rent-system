@@ -17,7 +17,7 @@ class ReportDuesController extends Controller
 
         if($request->ajax())
         {
-            $reports = ::with('building')->select('building_reports.*');
+             
             return $reports = DataTables::of($reports)
             ->addColumn('building', function($row){
                 return $row->building->name ?? 'NA';

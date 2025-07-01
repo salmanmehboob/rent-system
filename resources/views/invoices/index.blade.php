@@ -17,7 +17,7 @@
         <button id="viewInvoiceBtn" class="btn btn-primary d-none">All Invoices</button>
     </div>
 </div>
-<div style="max-height: 500px; overflow-y: auto; overflow-x:hidden;">   
+<div style="max-height: 700px; overflow-y: auto; overflow-x:hidden;">   
     <div class="row d-none" id="invoiceFormDiv">
         <div class="col-md-10 mx-5">
             <div class="card">
@@ -126,8 +126,49 @@
     <div class="row" id="invoiceListDiv">
         <div class="col-md-12 my-4">
             <div class="card">
-                <div class="card-header ">
+                <div class="card-header d-flex align-items-center justify-content-between">
                     <h4>{{$title}} List</h4>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="m-3">
+                            <select id="filterBuilding" class="form-control select2" style="min-width: 180px;">
+                                <option value="">All Buildings</option>
+                                @foreach ($buildings as $building)
+                                    <option value="{{ $building->id }}">{{ $building->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="m-3">
+                            <select id="filterCustomer" class="form-control select2" style="min-width: 180px;">
+                                <option value="">All Customers</option>
+                            </select>
+                        </div>
+
+                    <div class="m-3">
+                        <select id="filterStatus" class="form-control select2" style="min-width: 180px;">
+                            <option value="">All Statuses</option>
+                            <option value="paid">Paid</option>
+                            <option value="unpaid">Unpaid</option>
+                            <option value="partially_paid">Partially Paid</option>
+                            <option value="dues_adjusted">Dues Adjusted</option>
+                        </select>
+                    </div>
+                    <div class="m-3">
+                        <select id="filterMonth" class="form-control select2" style="min-width: 180px;">
+                            <option value="">All Months</option>
+                            @foreach ($months as $month)
+                                <option value="{{ $month }}">{{ $month }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="m-3">
+                        <select id="filterYear" class="form-control select2" style="min-width: 180px;">
+                            <option value="">All Years</option>
+                            @for ($year=$currentYear; $year>= $startYear; $year--)
+                                <option value="{{ $year }}">{{ $year }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -436,13 +477,52 @@
     }
    
 
-    //Ready fucntion start
+    // --- Building/Customer filter logic ---
+    $('#filterBuilding').on('change', function() {
+        const buildingId = $(this).val();
+        // Reset customer dropdown
+        $('#filterCustomer').html('<option value="">All Customers</option>').trigger('change');
+        if (buildingId) {
+            // Fetch customers for this building
+            $.ajax({
+                url: '/customer-by-building',
+                type: 'GET',
+                data: { building_id: buildingId },
+                success: function(data) {
+                    let options = '<option value="">All Customers</option>';
+                    data.forEach(function(item) {
+                        options += `<option value="${item.id}">${item.name}</option>`;
+                    });
+                    $('#filterCustomer').html(options).trigger('change.select2');
+                },
+                error: function() {
+                    toastr.error('Failed to load customers');
+                }
+            });
+        }
+        // Trigger DataTable filter
+        $('#invoicesTable').DataTable().ajax.reload();
+    });
+
+    $('#filterCustomer').on('change', function() {
+        $('#invoicesTable').DataTable().ajax.reload();
+    });
+
+    // --- DataTable with filter params ---
     $(document).ready(function() {
-       
         $('#invoicesTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: "{{ route('invoices.index') }}",
+            ajax: {
+                url: "{{ route('invoices.index') }}",
+                data: function(d) {
+                    d.building_id = $('#filterBuilding').val();
+                    d.customer_id = $('#filterCustomer').val();
+                    d.status = $('#filterStatus').val();
+                    d.month = $('#filterMonth').val();
+                    d.year = $('#filterYear').val();
+                }
+            },
             columns: [
                 { data: 'building', name: 'building' },
                 { data: 'customer', name: 'customer' }, 
@@ -561,8 +641,17 @@
             $('#viewInvoiceBtn').addClass('d-none');
         });
 
+        // Initialize select2 with allowClear for all relevant selects
+        $('.select2').select2({
+            allowClear: true,
+            placeholder: function(){
+                return $(this).attr('placeholder') || 'Select';
+            }
+        });
 
-      
+        $('#filterMonth, #filterYear, #filterStatus').on('change', function() {
+            $('#invoicesTable').DataTable().ajax.reload();
+        });
     });
 </script>
 @endpush

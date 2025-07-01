@@ -5,7 +5,8 @@
 <div style="max-height: 500px; overflow-y: auto; overflow-x:hidden;">
     
      <div class="row mb-3">
-        <div class="col-md-12">
+       
+        <div class="col-md-9 text-end">
             <button id="addCustomerBtn" class="btn btn-success">Add Customer</button>   
             <button id="viewCustomerBtn" class="btn btn-primary d-none">All Customers</button>  
         </div>
@@ -146,10 +147,24 @@
  <hr>
 
     <div class="row">
+        
         <div class="col-md-12 my-4">
             <div class="card">
                 <div class="card-header">
-                    <h4>{{$title}} List</h4>
+                   
+                    <div class="row">
+                        <div class="col-md-9">
+                        <h4>{{$title}} List</h4>
+                                            </div>
+                        <div class="col-md-3 d-flex justify-content-end">
+                            <select id="filterBuilding" class="form-control select2" style="min-width: 180px;">
+                                <option value="">All Buildings</option>
+                                @foreach ($buildings as $building)
+                                    <option value="{{ $building->id }}">{{ $building->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div id="formError" class="alert alert-danger d-none"></div>
@@ -251,11 +266,15 @@
 
     //Ready fucntion start
     $(document).ready(function() {
-
-        $('#customersTable').DataTable({
+        var customersTable = $('#customersTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: "{{ route('customers.index') }}",
+            ajax: {
+                url: "{{ route('customers.index') }}",
+                data: function(d) {
+                    d.building_id = $('#filterBuilding').val();
+                }
+            },
             columns: [
                 { data: 'building_name', name: 'building_name' },
                 { data: 'name', name: 'name' },
@@ -268,13 +287,16 @@
                 { data: 'end_date', name: 'end_date' },
                 { data: 'duration', name: 'duration' },
                 { data: 'monthly_rent', name: 'monthly_rent' },
-                // { data: 'status', name: 'status' },
                 { data: 'witnesses.0.name' },
                 { data: 'witnesses.0.mobile_no' },
                 { data: 'witnesses.0.cnic' },
                 { data: 'witnesses.0.address' },
                 { data: 'actions', name: 'actions', orderable: false, searchable: false },
             ]
+        });
+
+        $('#filterBuilding').on('change', function() {
+            customersTable.ajax.reload();
         });
 
         // Edit button
@@ -422,6 +444,12 @@
             $('.card:has(#customersTable)').parent().parent().removeClass('d-none'); // Show the list card  
             $('#addCustomerBtn').removeClass('d-none'); // Show the add button
             $('#viewCustomerBtn').addClass('d-none'); // Hide the view button   
+        });
+
+        // Initialize select2 with allowClear for building filter
+        $('#filterBuilding').select2({
+            placeholder: 'All Buildings',
+            allowClear: true
         });
     });
 </script>   

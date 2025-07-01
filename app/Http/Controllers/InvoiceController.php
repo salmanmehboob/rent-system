@@ -26,7 +26,23 @@ class InvoiceController extends Controller
                 },
                 'agreement',
                 'transactions'
-            ])->get();
+            ])
+            ->when($request->building_id, function ($query) use ($request) {
+                $query->where('building_id', $request->building_id);
+            })
+            ->when($request->customer_id, function ($query) use ($request) {
+                $query->where('customer_id', $request->customer_id);
+            })
+            ->when($request->status, function ($query) use ($request) {
+                $query->where('status', $request->status);
+            })
+            ->when($request->month, function ($query) use ($request) {
+                $query->where('month', $request->month);
+            })
+            ->when($request->year, function ($query) use ($request) {
+                $query->where('year', $request->year);
+            })
+            ->get();
             return DataTables()->of($invoices)
                 ->addColumn('building', function ($invoice) {
                     return $invoice->building->name ?? 'N/A';
@@ -442,7 +458,8 @@ class InvoiceController extends Controller
         $buildingId = $request->building_id;
         $customerId = $request->customer_id;
 
-        $query = Customer::with(['agreements.roomShops', 'invoices'])
+        $query = Customer::withTrashed()
+            ->with(['agreements.roomShops', 'invoices'])
             ->where(function($q) use ($buildingId, $customerId) {
                 if ($buildingId) {
                     $q->where('building_id', $buildingId);
