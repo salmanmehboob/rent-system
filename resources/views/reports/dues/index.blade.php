@@ -42,7 +42,7 @@
                         <table class="table table-bordered" id="duesTable" width="100%" cellspacing="0">
                             <thead>
                                 <th>Building</th>
-                                <th>Property</th>
+                                <th>Room/Shop</th>
                                 <th>Customer</th>
                                 <th>Total Dues</th>
                             </thead>
@@ -97,7 +97,7 @@
             buttons: ['copy', 'csv', 'pdf', 'excel', 'print'],
             columns: [
                 { data: 'building', name: 'building' },
-                { data: 'property', name: 'property' },
+                { data: 'properties', name: 'property' },
                 { data: 'customer', name: 'customer' },
                 { data: 'total_dues', name: 'total_dues' }
             ]

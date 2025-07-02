@@ -30,7 +30,7 @@ class PrintController extends Controller
 
         $invoices = Invoice::where('month', $latest->month)
             ->where('year', $latest->year)
-            ->with('customer') // adjust depending on your relationship
+            ->with('customer.building') // adjust depending on your relationship
             ->get();
 
         return view('prints.print-latest', compact('invoices', 'latest'));

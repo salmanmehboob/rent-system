@@ -14,9 +14,9 @@
 @endphp
 
 @section('content')
-    <div style="max-height: 500px; overflow-y: auto; overflow-x: hidden"> 
+    <div style="  overflow-y: auto; overflow-x: hidden"> 
         <div class="row">
-            <div class="col-md-10" style="margin-left: 5rem;">
+            <div class="col-md-12" >
                 <div class="card">
                     <div class="card-header">
                         <h2>{{ $title }} Form</h2>
@@ -79,7 +79,7 @@
                             </div>
                         </div>
 
-                        <button type="button" id="submitBtn" class="btn btn-primary float-end submit-btn">Generate Report</button>
+                        <button type="button" id="submitBtn" class="btn btn-primary float-right submit-btn">Generate Report</button>
                         </form>
                     </div>
                 </div>
@@ -88,32 +88,34 @@
         <hr>
         <div class="row">
             <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>{{ $title }} List</h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-resposive">
-                            <table class="table table-bordered" id="customersTable" width="100%" cellspacing="0">
-                            <thead>
-                                <th>Customer</th>
-                                <th>Month</th>
-                                <th>Rent</th>
-                                <th>Paid Amount</th>
-                                <th>Dues</th>
-                                <th>Payment Date</th>
-                            </thead>
-                            <tbody></tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="2" style="text-align:right">Total:</th>
-                                    <th id="total_rent"></th>
-                                    <th id="total_paid"></th>
-                                    <th id="total_dues"></th>
-                                    <th></th>
-                                </tr>
-                            </tfoot>
-                            </table>
+                <div id="reportSection" class="d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>{{ $title }} List</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-resposive">
+                                <table class="table table-bordered" id="customersTable" width="100%" cellspacing="0">
+                                <thead>
+                                    <th>Customer</th>
+                                    <th>Month</th>
+                                    <th>Rent</th>
+                                    <th>Paid Amount</th>
+                                    <th>Dues</th>
+                                    <th>Payment Date</th>
+                                </thead>
+                                <tbody></tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="2" style="text-align:right">Total:</th>
+                                        <th id="total_rent"></th>
+                                        <th id="total_paid"></th>
+                                        <th id="total_dues"></th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -137,7 +139,6 @@
                         d.end_month = $('#end_month').val();
                         d.end_year = $('#end_year').val();
                     }
-                    
                 },
                 dom: 'Bfrtip',
                 buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
@@ -150,9 +151,9 @@
                     { data: 'payment_date', name: 'payment_date' },
                 ],
                 footerCallback: function (row, data, start, end, display) {
-            // This is client-side footer calculation
-            // Your server-side approach with xhr.dt is better for large datasets
-        }
+                    // This is client-side footer calculation
+                    // Your server-side approach with xhr.dt is better for large datasets
+                }
             });
             // Reload the table on button click
             $('#submitBtn').click(function () {
@@ -160,13 +161,18 @@
             });
         });
 
-         $('#customersTable').on('xhr.dt', function (e, settings, json, xhr) {
-                if (json.summary) {
-                    $('#total_rent').text(json.summary.rent);
-                    $('#total_paid').text(json.summary.paid);
-                    $('#total_dues').text(json.summary.dues);
-                }
-            });
+        $('#customersTable').on('xhr.dt', function (e, settings, json, xhr) {
+            if (json && json.data && json.data.length > 0) {
+                $('#reportSection').removeClass('d-none');
+            } else {
+                $('#reportSection').addClass('d-none');
+            }
+            if (json.summary) {
+                $('#total_rent').text(json.summary.rent);
+                $('#total_paid').text(json.summary.paid);
+                $('#total_dues').text(json.summary.dues);
+            }
+        });
     </script>
 
 @endpush

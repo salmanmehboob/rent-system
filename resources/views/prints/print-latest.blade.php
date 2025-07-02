@@ -2,94 +2,86 @@
 <html>
 <head>
     <title>Latest Invoices</title>
-   <style>
+    <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
-      font-family: Arial, sans-serif;
-      width: 700px;
-      margin: auto;
-      padding: 20px;
+      font-family: Tahoma, Arial, sans-serif;
+      width: 58mm;
+      margin: 0 auto;
+      padding: 0;
+      font-size: 11px;
+      background: #fff;
+    }
+    .invoice-container {
+      width: 100%;
     }
     h2 {
       text-align: center;
-      margin: 0;
+      margin: 0 0 4px 0;
+      font-size: 15px;
+      font-weight: bold;
     }
-
-    .invoice-page {
-        padding: 20px;
-        margin-top: 80px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        page-break-after: always;
-        height: 700px;
-        }
-
-        @media print {
-        .invoice-page {
-            page-break-after: always;
-        }
-
-        .footer {
-            text-align: left;
-            font-size: 12px;
-            margin-top: 80px;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-        }
-    }
-
-
     .address {
       text-align: center;
-      font-size: 14px;
-      margin-bottom: 20px;
+      font-size: 10px;
+      margin: 0 0 8px;
     }
     .meta {
-      font-size: 14px;
-      margin-bottom: 20px;
-      line-height: 1.6;
+      font-size: 10px;
+      margin-bottom: 6px;
+      line-height: 1.4;
     }
-
     .meta strong {
       display: inline-block;
-      width: 130px;
+      width: 80px;
     }
-
     .line-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
+      font-size: 10px;
+      margin-bottom: 6px;
     }
-
-    .line-table td, .line-table th {
-      border-bottom: 1px solid #000;
-      padding: 8px 0;
+    .line-table th, .line-table td {
+      border-bottom: 1px dashed #000;
+      padding: 2px 0;
     }
-
-    .line-table td:first-child, .line-table th:first-child {
+    .line-table th {
       text-align: left;
+      font-weight: bold;
     }
-
     .line-table td:last-child, .line-table th:last-child {
       text-align: right;
     }
-
     .urdu {
       text-align: center;
-      margin-top: 20px;
+      margin-top: 8px;
       font-family: 'Noto Nastaliq Urdu', serif;
-      font-size: 16px;
+      font-size: 12px;
     }
-
- 
+    .footer {
+      font-size: 9px;
+      margin-top: 10px;
+      text-align: left;
+    }
 
     @media print {
       body {
-        width: auto;
-        margin: 0;
+        width: 70mm;
+        margin: 5px;
+        padding: 5px;
       }
+      .footer {
+        margin-top: 6px;
+      }
+    }
+
+    .invoice-page {
+      page-break-after: always;
+    }
+    .invoice-page:last-child {
+      page-break-after: auto;
     }
   </style>
 </head>
@@ -97,12 +89,10 @@
 
     @foreach($invoices as $invoice)
        <div class="invoice-page">
-            <h2><strong>AppFlex Technology</strong></h2>
-            <div class="address">
-                Al-Sadiq Plaza, F-109-110, Old Post Office Road,<br>
-                Mingora Swat Mingora, Khyber Pakhtunkhwa,<br>
-                Pakistan - 19130
-            </div>
+            <h2><strong>{{ $invoice->customer->building->name }}</strong></h2>
+              <div class="address">{{ $invoice->customer->building->address }}</div>
+              <div class="address">{{ $invoice->customer->building->contact_person }} {{ $invoice->customer->building->contact }}</div>
+
 
             <div class="meta">
                 <strong>Customer Name:</strong> {{ $invoice->customer->name }}<br>

@@ -189,7 +189,7 @@ class ReportController extends Controller
                     $rooms = [];
                     foreach ($group as $invoice) {
                         foreach ($invoice->agreement->roomShops as $room) {
-                            $rooms[] = $room->type . ' - ' . $room->no;
+                            $rooms[] =   $room->no;
                         }
                     }
                     return implode(', ', array_unique($rooms));

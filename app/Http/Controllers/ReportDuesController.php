@@ -15,24 +15,43 @@ class ReportDuesController extends Controller
         $title = "Dues Reports";
         $buildings = Building::orderBy('name', 'asc')->get();
 
-        if($request->ajax())
-        {
-             
-            return $reports = DataTables::of($reports)
-            ->addColumn('building', function($row){
-                return $row->building->name ?? 'NA';
-            })
-            ->addColumn('customer', function ($row) {
-                return $row->building->customers()->where('building_id', $request->building->id)->name ?? 'NA';
-            })
-            ->addColumn('property', function($row) {
-                return $row->building->rooms()->where('building_id', $request->building->id)->type && ->no ?? 'NA';
-            })
-            ->addColumn('total_dues', function($row) {
-                return $row->building->invoices()->where('building_id', $request->building->id)->where('customer_id', $request->customer->id)->remianing
-            })
-            ->make(true);
+        if ($request->ajax()) {
+            // Build the query from the Invoice model
+            $query = Invoice::with(['building', 'customer', 'roomShop']);
+
+            // Filter by building if provided
+            if ($request->building_id) {
+                $query->where('building_id', $request->building_id);
+            }
+
+            // Filter by room/shop if provided
+            if ($request->room_shop_id) {
+                $query->where('room_shop_id', $request->room_shop_id);
+            }
+
+            // Only show invoices with remaining dues
+            $query->where('remaining', '>', 0);
+
+            return DataTables::of($query)
+                ->addColumn('building', function ($row) {
+                    return $row->building->name ?? 'NA';
+                })
+                ->addColumn('properties', function ($row) {
+                    if ($row->roomShop) {
+                        return   $row->roomShop->no;
+                    }
+                    return 'NA';
+                })
+                ->addColumn('customer', function ($row) {
+                    return $row->customer->name ?? 'NA';
+                })
+                ->addColumn('total_dues', function ($row) {
+                    return number_format($row->remaining, 2);
+                })
+                ->rawColumns(['building', 'properties', 'customer', 'total_dues'])
+                ->make(true);
         }
+
         return view('reports.dues.index', compact('title', 'buildings'));
     }
 

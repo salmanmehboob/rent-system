@@ -91,7 +91,7 @@ class InvoiceController extends Controller
 
                              // Add Edit button for Current invoices
                        $buttons .= '
-                       <a href="#" 
+                       <a href="#"
                        class="btn btn-warning shadow btn-sm sharp mx-2 editInvoiceBtn"
                        title="Edit Invoice"
                        data-id="' . $invoice->id . '"
@@ -116,10 +116,10 @@ class InvoiceController extends Controller
                     // Show Print button only if remaining > 0
                     if ($invoice->type === 'Current') {
                         if($invoice->remaining > 0) {
-                            
+
                             $buttons .= '
 
-                                <a href="#" 
+                                <a href="#"
                                 class="btn btn-primary shadow btn-sm sharp me-1 payNowBtn"
                                 data-url="' . route('invoices.paid', $invoice->id) . '"
                                 data-id="' . $invoice->id . '"
@@ -134,7 +134,7 @@ class InvoiceController extends Controller
                                 </a>
                             ';
                         }
-                   
+
                         $buttons .='<a href="javascript:void(0)"
                             data-url="' . route('invoices.transactions', $invoice->id) . '"
                             class="btn btn-primary shadow btn-sm sharp mx-2 transactionHistoryBtn"
@@ -283,24 +283,6 @@ class InvoiceController extends Controller
             $newInvoiceDate = Carbon::createFromFormat('d-F-Y H:i:s', '01-' . $validatedData['month'] . '-' . $validatedData['year'] . ' 00:00:00');
             $existingInvoices = Invoice::where('customer_id', $validatedData['customer_id'])->get();
 
-            
-                $latestInvoice = $existingInvoices->map(function ($inv) {
-                    return [
-                        'model' => $inv,
-                        'date' => Carbon::createFromFormat('d-F-Y H:i:s', '01-' . $inv->month . '-' . $inv->year . ' 00:00:00'),
-                    ];
-                })->sortByDesc('date')->first();
-
-                if ($newInvoiceDate->gt($latestInvoice['date'])) {
-                    $validatedData['type'] = 'Current';
-                    // Update all existing invoices of this customer to 'Previous'
-                    Invoice::where('customer_id', $validatedData['customer_id'])
-                        ->where('type', 'Current')
-                        ->update(['type' => 'Previous', 'status' => 'Dues Adjusted']);
-                } else {
-                    $validatedData['type'] = 'Previous';
-                }
-             
 
             $invoice->update($validatedData);
 
@@ -322,9 +304,145 @@ class InvoiceController extends Controller
     }
 
 
+
+
+    public function paid(Request $request, $id)
+    {
+            $validatedData = $request->validate([
+                'paid' => 'required|numeric',
+                'note' => 'required|string',
+            ]);
+
+            try {
+                DB::beginTransaction();
+
+                $invoice = Invoice::find($id);
+
+                // Subtract the amount from dues
+                $paidAmount = $validatedData['paid'];
+                $remaining = $invoice->remaining - $paidAmount;
+                $remaining = $remaining < 0 ? 0 : $remaining;
+
+                $rentDues = $invoice->rent_amount + $invoice->dues;
+
+                 // Determine new status
+                if ($remaining == 0) {
+                    $status = 'Paid';
+                } elseif ($remaining < $rentDues) {
+                    $status = 'Partially Paid';
+                } else {
+                    $status = 'Unpaid';
+                }
+
+                // Update invoice
+                $invoice->remaining = $remaining;
+                $invoice->status = $status;
+                $invoice->paid += $paidAmount;
+                // If fully paid, reset dues
+                if ($remaining == 0) {
+                    $invoice->dues = 0;
+                }
+                $invoice->save();
+
+
+                 $transactionData = [
+                'invoice_id' => $invoice->id,
+                'paid' =>  $validatedData['paid'],
+                'year' =>$invoice->year,
+                'month' => $invoice->month,
+                'remaining' =>  $remaining,
+                'note' => $validatedData['note'],
+            ];
+
+                 // insert the data into transactions table
+                Transaction::create($transactionData);
+
+                DB::commit();
+
+              return redirect()->route('invoices.index')->with('success','Invoice Paid Successfully');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                // dd($e->getMessage());
+                return redirect()->route('invoices.index')->with('error',$e->getMessage());
+
+
+            }
+
+     }
+
+
+
+
+    public function getByBuilding(Request $request)
+    {
+        $buildingId = $request->building_id;
+        $customerId = $request->customer_id;
+
+        $query = Customer::withTrashed()
+            ->with(['agreements.roomShops', 'invoices'])
+            ->where(function($q) use ($buildingId, $customerId) {
+                if ($buildingId) {
+                    $q->where('building_id', $buildingId);
+                }
+
+                if ($customerId) {
+                    $q->orWhere('id', $customerId);
+                }
+            });
+
+        $customers = $query->get()->map(function ($customer) {
+            $agreement = $customer->agreements->first();
+
+            $roomCount = $agreement && $agreement->roomShops
+                ? $agreement->roomShops->count()
+                : 0;
+
+            $monthlyRent = $agreement->monthly_rent ?? 0;
+            $totalRent = $monthlyRent * $roomCount;
+
+            // $latestInvoice = $customer->invoices()->latest()->first();
+            // $totalDues = $latestInvoice?->dues ?? 0;
+            $latestInvoice = $customer->invoices()->latest()->first();
+            $dues = $latestInvoice?->remaining ?? 0;
+
+            return [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'rent_amount' => $totalRent,
+                'dues' => $dues,
+            ];
+        })->values();
+
+        return response()->json($customers);
+    }
+
+    public function getTransactions($id)
+    {
+        $invoice = Invoice::with('customer')->find($id);
+
+        // Get all transactions for the same customer, across all invoices
+        $transactions = Transaction::with('invoice.customer')
+            ->whereHas('invoice', function ($query) use ($invoice) {
+               $query->where('customer_id', $invoice->customer_id);
+            })
+            ->get();
+
+        return response()->json([
+            'transactions' => $transactions
+        ]);
+    }
+
+    public function show()
+    {
+        $title = "Generate All Bills";
+        $buildings = Building::orderBy('name', 'asc')->get();
+
+        return view('all-bills.index', compact('title', 'buildings'));
+    }
+
     public function combine(Request $request)
     {
-        $validatedData = $request->validate([
+          $validatedData = $request->validate([
             'building_id' => 'required|exists:buildings,id',
             'month' => 'required|string',
             'year' => 'required|string',
@@ -338,8 +456,8 @@ class InvoiceController extends Controller
 
                 $query->where('status', 'Active')
                     ->whereDate('start_date', '<=', Carbon::createFromDate(
-                        $validatedData['year'], 
-                        $monthNumber, 
+                        $validatedData['year'],
+                        $monthNumber,
                         1
                     )->endOfMonth());
             }, 'agreements.roomShops'])
@@ -349,8 +467,8 @@ class InvoiceController extends Controller
 
                 $query->where('status', 'Active')
                     ->whereDate('start_date', '<=', Carbon::createFromDate(
-                        $validatedData['year'], 
-                        $monthNumber, 
+                        $validatedData['year'],
+                        $monthNumber,
                         1
                     )->endOfMonth());
             })
@@ -381,7 +499,7 @@ class InvoiceController extends Controller
                     $skippedCount++;
                     continue;
                 }
-                
+
 
                 // Calculate rent amount
                 $roomCount = $agreement->roomShops->count();
@@ -462,145 +580,6 @@ class InvoiceController extends Controller
             DB::rollBack();
             return redirect()->back()->with('custom_error', 'Failed to generate invoices: ' . $e->getMessage());
         }
-    }
-
-
-
-
-
-    public function paid(Request $request, $id)
-    {
-            $validatedData = $request->validate([
-                'paid' => 'required|numeric',
-                'note' => 'required|string',
-            ]);
-
-            try {
-                DB::beginTransaction();
-
-                $invoice = Invoice::find($id);
-
-                // Subtract the amount from dues
-                $paidAmount = $validatedData['paid'];
-                $remaining = $invoice->remaining - $paidAmount;
-                $remaining = $remaining < 0 ? 0 : $remaining;
-
-                $rentDues = $invoice->rent_amount + $invoice->dues;
-             
-                 // Determine new status
-                if ($remaining == 0) {
-                    $status = 'Paid';
-                } elseif ($remaining < $rentDues) {
-                    $status = 'Partially Paid';
-                } else {
-                    $status = 'Unpaid';
-                }
-
-                // Update invoice
-                $invoice->remaining = $remaining;
-                $invoice->status = $status;
-                $invoice->paid += $paidAmount;
-                // If fully paid, reset dues
-                if ($remaining == 0) {
-                    $invoice->dues = 0;
-                }
-                $invoice->save();
-
-
-                 $transactionData = [
-                'invoice_id' => $invoice->id,
-                'paid' =>  $validatedData['paid'],
-                'year' =>$invoice->year,
-                'month' => $invoice->month,
-                'remaining' =>  $remaining,
-                'note' => $validatedData['note'],
-            ];
-                 
-                 // insert the data into transactions table
-                Transaction::create($transactionData);
-
-                DB::commit();
-
-              return redirect()->route('invoices.index')->with('success','Invoice Paid Successfully');
-            } catch (\Exception $e) {
-                DB::rollBack();
-                // dd($e->getMessage());
-                return redirect()->route('invoices.index')->with('error',$e->getMessage());
-
-               
-            }
-
-     }
-
-
-
-
-    public function getByBuilding(Request $request)
-    {
-        $buildingId = $request->building_id;
-        $customerId = $request->customer_id;
-
-        $query = Customer::withTrashed()
-            ->with(['agreements.roomShops', 'invoices'])
-            ->where(function($q) use ($buildingId, $customerId) {
-                if ($buildingId) {
-                    $q->where('building_id', $buildingId);
-                }
-
-                if ($customerId) {
-                    $q->orWhere('id', $customerId);
-                }
-            });
-
-        $customers = $query->get()->map(function ($customer) {
-            $agreement = $customer->agreements->first();
-
-            $roomCount = $agreement && $agreement->roomShops 
-                ? $agreement->roomShops->count() 
-                : 0;
-
-            $monthlyRent = $agreement->monthly_rent ?? 0;
-            $totalRent = $monthlyRent * $roomCount;
-            
-            // $latestInvoice = $customer->invoices()->latest()->first();
-            // $totalDues = $latestInvoice?->dues ?? 0;
-            $latestInvoice = $customer->invoices()->latest()->first();
-            $dues = $latestInvoice?->remaining ?? 0;
- 
-            return [
-                'id' => $customer->id,
-                'name' => $customer->name,
-                'rent_amount' => $totalRent,
-                'dues' => $dues,
-            ];
-        })->values();
-
-        return response()->json($customers);
-    }
-
-
-    public function getTransactions($id)
-    {
-        $invoice = Invoice::with('customer')->find($id);
-
-        // Get all transactions for the same customer, across all invoices
-        $transactions = Transaction::with('invoice.customer')
-            ->whereHas('invoice', function ($query) use ($invoice) {
-               $query->where('customer_id', $invoice->customer_id);
-            })
-            ->get();
-
-        return response()->json([
-            'transactions' => $transactions
-        ]);
-    }
-
-    public function show() 
-    {
-        $title = "Generate All Bills";
-        $buildings = Building::orderBy('name', 'asc')->get();
-
-        return view('all-bills.index', compact('title', 'buildings'));
     }
 
 }

@@ -146,7 +146,7 @@
 
  <hr>
 
-    <div class="row">
+    <div class="row" id="customerListDiv">
         
         <div class="col-md-12 my-4">
             <div class="card">
@@ -304,8 +304,12 @@
         // Edit button
         $(document).on('click', '#editBtn', function(e) {
             e.preventDefault();
-            // For debugging - check the form data structure
-                console.log($(this).serializeArray());
+ 
+             
+            $('#customerListDiv').addClass('d-none'); // Hide the add button
+            $('#customerFormDiv').removeClass('d-none'); // Show the view button    
+            $('#addCustomerBtn').addClass('d-none'); // Hide the add button
+            $('#viewCustomerBtn').removeClass('d-none'); // Show the view button        
 
             const $form = $('#customerForm');
             $form.attr('action', $(this).data('url'));
@@ -360,6 +364,7 @@
 
             $('#submitBtn').text('Update');
             $('#cancelBtn').removeClass('d-none');
+
         });
 
 

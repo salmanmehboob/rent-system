@@ -40,7 +40,7 @@
                             <th>Total Rooms</th>
                             <th>Total Shops</th>
                             <th>Available Rooms</th>
-                            <th>Avaialable Shops</th>
+                            <th>Available Shops</th>
                             <th>Total Rented</th>
                         </thead>
                         <tbody></tbody>

@@ -346,7 +346,7 @@
 
             // Tooltip with value only
             series.slices.template.setAll({
-                tooltipText: "{category}: {value}"
+                tooltipText: "{category}: {value} ({value.percent.formatNumber('0.0')}%)"
             });
 
             // Add legend
@@ -406,15 +406,30 @@
                 })
             );
 
-            series.columns.template.setAll({ tooltipText: "{categoryY}: {valueX}" });
+            // Add value labels inside bars
+            series.bullets.push(function() {
+                return am5.Bullet.new(root, {
+                    locationX: 1,
+                    sprite: am5.Label.new(root, {
+                        text: "{valueX}",
+                        fill: am5.color(0xffffff),
+                        centerY: am5.p50,
+                        centerX: am5.p100,
+                        populateText: true
+                    })
+                });
+            });
+
+            series.columns.template.setAll({
+                tooltipText: "Name: {categoryY}\nDue: {valueX}"
+            });
 
             series.data.setAll(topCustomersData);
 
             // Make chart animate on load
             series.appear(1000);
             chart.appear(1000, 100);
-            console.log(topCustomersData);
-        });
+         });
 
     </script>
     

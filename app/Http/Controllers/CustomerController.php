@@ -240,8 +240,7 @@ class CustomerController extends Controller
    public function update(Request $request, $id)
     {
         if ($request->ajax()) {
-
-                $validated = $request->validate([
+            $validated = $request->validate([
                 'building_id' => 'required|exists:buildings,id',
                 'name' => 'required|string|max:255',
                 'mobile_no' => 'required|string|max:15',
@@ -269,13 +268,15 @@ class CustomerController extends Controller
             try {
                 DB::beginTransaction();
 
-
                 $customer = Customer::find($id);
+                if (!$customer) {
+                    return response()->json(['success' => false, 'message' => 'Customer not found.'], 404);
+                }
 
-                // Update customer
                 $customer->update($request->only(['building_id', 'name', 'mobile_no', 'cnic', 'address', 'status']));
-                // Agreement update or create
-                $agreement = $customer->agreements()->first();
+
+                // Find the active agreement (or the one you want to update)
+                $agreement = $customer->agreements()->where('status', 'active')->first();
 
                 $agreementData = [
                     'duration' => $request->duration,
@@ -286,26 +287,30 @@ class CustomerController extends Controller
                 ];
 
                 if ($agreement) {
-                    $agreement->update($agreementData);
-
                     // Detach old room shops
                     $oldRoomShopIds = $agreement->roomShops()->pluck('room_shop_id')->toArray();
- 
                     $agreement->roomShops()->detach();
-
                     RoomShop::whereIn('id', $oldRoomShopIds)->update([
                         'customer_id' => null,
                         'availability' => 1,
                     ]);
-                    // dd($request->all());
-
+                    $agreement->update($agreementData);
                 } else {
+                    // Optionally, detach room shops from any previous agreements
+                    $oldAgreements = $customer->agreements()->get();
+                    foreach ($oldAgreements as $oldAgreement) {
+                        $oldRoomShopIds = $oldAgreement->roomShops()->pluck('room_shop_id')->toArray();
+                        $oldAgreement->roomShops()->detach();
+                        RoomShop::whereIn('id', $oldRoomShopIds)->update([
+                            'customer_id' => null,
+                            'availability' => 1,
+                        ]);
+                    }
                     $agreement = $customer->agreements()->create($agreementData);
                 }
 
                 // Attach new room shops
                 $agreement->roomShops()->sync($request->room_shop_id);
-
                 RoomShop::whereIn('id', $request->room_shop_id)->update([
                     'customer_id' => $customer->id,
                     'availability' => 0,
@@ -340,10 +345,9 @@ class CustomerController extends Controller
                     'error' => $e->getMessage(),
                 ], 500);
             }
-            return response()->json(['success' => false, 'message' => 'Invalid request.'], 400);
         }
 
-       
+        return response()->json(['success' => false, 'message' => 'Invalid request.'], 400);
     }
 
 

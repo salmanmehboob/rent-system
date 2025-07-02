@@ -80,7 +80,9 @@ class HomeController extends Controller
 
         $topCustomers = Invoice::with('customer:id,name')
             ->select('customer_id', DB::raw('SUM(remaining) as total_due'))
+            ->where('type', 'Current')
             ->groupBy('customer_id')
+            ->having('total_due', '>', 0)
             ->orderByDesc('total_due')
             ->limit(10)
             ->get()
