@@ -12,18 +12,18 @@ class Customer extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'building_id', 
-        'name', 
-        'mobile_no', 
-        'cnic', 
-        'address', 
+        'building_id',
+        'name',
+        'mobile_no',
+        'cnic',
+        'address',
         'status'
     ];
 
     public function building()
     {
         return $this->belongsTo(Building::class);
-       
+
     }
 
     public function rooms()
@@ -32,24 +32,27 @@ class Customer extends Model
             $q->where('customer_id', $this->id)->where('status', 'active');
         })->get();
     }
- 
+
 
     public function agreements()
     {
         return $this->hasMany(Agreement::class);
-       
+
     }
 
-    // public function activeAgreement()
-    // {
-    //     return $this->hasOne(Agreement::class)->where('status', 'active');
-    // }
+    public function activeRooms()
+    {
+        return $this->hasManyThrough(RoomShop::class, Agreement::class, 'customer_id', 'id', 'id', 'room_shop_id')
+            ->whereHas('agreements', function ($q) {
+                $q->where('status', 'active');
+            });
+    }
 
 
     public function witnesses()
     {
         return $this->belongsToMany(Witness::class, 'customer_witness');
-       
+
     }
 
     public function invoices()

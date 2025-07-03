@@ -68,6 +68,14 @@
                     <span>Agreements</span></a>
             </li>
 
+            <!-- Nav Item - Generate Excel Sheet -->
+            <li class="nav-item {{ Route::is('excel.index') ? 'active' : '' }}">
+                <a class="nav-link {{ Route::is('excel.index') ? 'active' : '' }}" href="{{ route('excel.index') }}">
+                    <i class="fas fa-file-excel"></i>
+                    <span>Generate Excel Sheet</span>
+                </a>
+            </li>
+
                    <!-- Divider -->
             <hr class="sidebar-divider">
 
@@ -106,6 +114,7 @@
                     </div>
                 </li>
 
+                    
 
             
        

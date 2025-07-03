@@ -8,11 +8,11 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PrintController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ExcelExportController;
 
-
-//Route::get('/', function () {
-//    return redirect()->route('login');
-//});
+Route::get('/', function () {
+   return redirect()->route('login');
+});
 
 Auth::routes();
 
@@ -85,6 +85,9 @@ Route::middleware('auth')->group(function () {
         Route::get('dues', 'getDuesReports')->name('dues');
     });
     // get rooms and shops by selecting building
-    Route::get('/', [ReportController::class, 'getByBuilding'])->name('depend');
+    Route::get('/depend', [ReportController::class, 'getByBuilding'])->name('depend');
+
+    // Excel Sheet Generator
+    Route::get('/generate-excel', [ExcelExportController::class, 'index'])->name('excel.index');
 
 });
