@@ -30,7 +30,7 @@
                     <span>Buildings</span></a>
             </li>
 
-            
+
             <!-- Nav Item - Tables -->
             <li class="nav-item {{ Route::is('roomshops.index') ? 'active' : '' }}">
                 <a class="nav-link {{ Route::is('roomshops.index') ? 'active' : '' }}" href="{{route('roomshops.index')}}">
@@ -38,7 +38,7 @@
                     <span>Rooms Shops</span></a>
             </li>
 
-            
+
             <!-- Nav Item - Tables -->
             <li class="nav-item {{ Route::is('customers.index') ? 'active' : '' }}">
                 <a class="nav-link {{ Route::is('customers.index') ? 'active' : '' }}" href="{{ route('customers.index') }}">
@@ -46,7 +46,7 @@
                     <span>Customers</span></a>
             </li>
 
-            
+
             <!-- Nav Item - Tables -->
             <li class="nav-item {{ Route::is('invoices.index') ? 'active' : '' }}">
                 <a class="nav-link {{ Route::is('invoices.index') ? 'active' : '' }}" href="{{ route('invoices.index') }}">
@@ -72,7 +72,7 @@
             <li class="nav-item {{ Route::is('excel.index') ? 'active' : '' }}">
                 <a class="nav-link {{ Route::is('excel.index') ? 'active' : '' }}" href="{{ route('excel.index') }}">
                     <i class="fas fa-file-excel"></i>
-                    <span>Generate Excel Sheet</span>
+                    <span>Generate Customer Sheet</span>
                 </a>
             </li>
 
@@ -95,17 +95,17 @@
                     <div id="collapseUtilities" class="collapse {{ $reportsActive ? 'show' : '' }}" aria-labelledby="headingUtilities"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item {{ request()->routeIs('reports.customers') ? 'active' : '' }}" 
+                            <a class="collapse-item {{ request()->routeIs('reports.customers') ? 'active' : '' }}"
                                 href="{{ route('reports.customers') }}">
                                 <i class="fas fa-user-check mx-2"></i>
                                 <span>Customer Reports</span>
                             </a>
-                            <a class="collapse-item {{ request()->routeIs('reports.dues') ? 'active' : '' }}" 
+                            <a class="collapse-item {{ request()->routeIs('reports.dues') ? 'active' : '' }}"
                                 href="{{ route('reports.dues') }}">
                                 <i class="fas fa-file-invoice-dollar mx-2"></i>
                                 <span>Dues Reports</span>
                             </a>
-                            <a class="collapse-item {{ request()->routeIs('reports.buildings') ? 'active' : '' }}" 
+                            <a class="collapse-item {{ request()->routeIs('reports.buildings') ? 'active' : '' }}"
                                 href="{{ route('reports.buildings') }}">
                                 <i class="fas fa-building mx-2"></i>
                                 <span>Building Reports</span>
@@ -114,11 +114,11 @@
                     </div>
                 </li>
 
-                    
 
-            
-       
 
-     
+
+
+
+
 
         </ul>

@@ -6,7 +6,7 @@
         <div class="col-md-8 mx-auto">
             <div class="card">
                 <div class="card-header">
-                    <h2>Generate Excel Sheet</h2>
+                    <h2>Generate Customer Sheet</h2>
                 </div>
                 <div class="card-body">
                     <form id="filterForm" class="mb-4">
