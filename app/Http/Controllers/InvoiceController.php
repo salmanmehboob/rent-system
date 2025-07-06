@@ -385,7 +385,7 @@ class InvoiceController extends Controller
             });
 
         $customers = $query->get()->map(function ($customer) use ($invoice_id) {
-            $agreement = $customer->agreements->first();
+            $agreement = $customer->agreements->where('status', 'active')->first();
 
             $roomCount = $agreement && $agreement->roomShops
                 ? $agreement->roomShops->count()

@@ -186,33 +186,86 @@
         </div>
     </div>
 
-    <!-- Reports Row -->
+    <!-- Reports Summary Row -->
+    <!-- Report Summary Charts -->
     <div class="row mb-3">
-        <div class="col-md-12">
-            <div class="card shadow">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Reports Summary</h6>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="m-0 font-weight-bold text-primary">Monthly Collection Trend</h6>
                 </div>
                 <div class="card-body">
-                    <div id="formError" class="alert alert-danger d-none"></div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Total Collection</th>
-                                    <th>Total Dues</th>
-                                    <th>Total Available Rooms</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>{{ $invoices->sum('paid') }}</td>
-                                    <td>{{ $invoices->sum('remaining') }}</td>
-                                    <td>{{ $roomshops }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <canvas id="monthlyCollectionChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="m-0 font-weight-bold text-primary">Collection vs Dues (Last 6 Months)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="collectionTrendChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="m-0 font-weight-bold text-primary">Building-wise Collection</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="buildingCollectionChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agreement Charts Row -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="m-0 font-weight-bold text-primary">Agreement Status Breakdown</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="agreementStatusChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="m-0 font-weight-bold text-primary">Monthly Expiry Trend</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyExpiryChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="m-0 font-weight-bold text-primary">Expired Agreements Trend</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="expiredAgreementsChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="m-0 font-weight-bold text-primary">Expiring Agreements (Next 3 Months)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="expiringAgreementsChart" width="400" height="200"></canvas>
                 </div>
             </div>
         </div>
@@ -473,6 +526,573 @@
                                 font: {
                                     size: 11
                                 }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Chart 3: Monthly Collection Trend Chart
+        const monthlyCollectionData = @json($monthlyCollection);
+        const monthlyCollectionCtx = document.getElementById("monthlyCollectionChart");
+        if (monthlyCollectionCtx && monthlyCollectionData.length > 0) {
+            const labels = monthlyCollectionData.map(item => item.period);
+            const paidData = monthlyCollectionData.map(item => item.paid);
+            const remainingData = monthlyCollectionData.map(item => item.remaining);
+
+            new Chart(monthlyCollectionCtx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Paid Amount",
+                        data: paidData,
+                        borderColor: "rgba(75, 192, 192, 1)",
+                        backgroundColor: "rgba(75, 192, 192, 0.2)",
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: "Remaining Amount",
+                        data: remainingData,
+                        borderColor: "rgba(255, 99, 132, 1)",
+                        backgroundColor: "rgba(255, 99, 132, 0.2)",
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "top",
+                            labels: {
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Chart 4: Collection vs Dues Trend Chart
+        const collectionTrendData = @json($collectionTrend);
+        const collectionTrendCtx = document.getElementById("collectionTrendChart");
+        if (collectionTrendCtx && collectionTrendData.length > 0) {
+            const trendLabels = collectionTrendData.map(item => item.period);
+            const collectionData = collectionTrendData.map(item => item.collection);
+            const duesData = collectionTrendData.map(item => item.dues);
+
+            new Chart(collectionTrendCtx, {
+                type: "bar",
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: "Collection",
+                        data: collectionData,
+                        backgroundColor: "rgba(75, 192, 192, 0.8)",
+                        borderColor: "rgba(75, 192, 192, 1)",
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }, {
+                        label: "Dues",
+                        data: duesData,
+                        backgroundColor: "rgba(255, 99, 132, 0.8)",
+                        borderColor: "rgba(255, 99, 132, 1)",
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "top",
+                            labels: {
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Chart 5: Building-wise Collection Chart
+        const buildingCollectionData = @json($buildingCollection);
+        const buildingCollectionCtx = document.getElementById("buildingCollectionChart");
+        if (buildingCollectionCtx && Object.keys(buildingCollectionData).length > 0) {
+            const buildingLabels = Object.keys(buildingCollectionData);
+            const buildingPaidData = Object.values(buildingCollectionData).map(item => item.total_paid);
+            const buildingRemainingData = Object.values(buildingCollectionData).map(item => item.total_remaining);
+
+            new Chart(buildingCollectionCtx, {
+                type: "bar",
+                data: {
+                    labels: buildingLabels,
+                    datasets: [{
+                        label: "Total Paid",
+                        data: buildingPaidData,
+                        backgroundColor: "rgba(75, 192, 192, 0.8)",
+                        borderColor: "rgba(75, 192, 192, 1)",
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }, {
+                        label: "Total Remaining",
+                        data: buildingRemainingData,
+                        backgroundColor: "rgba(255, 99, 132, 0.8)",
+                        borderColor: "rgba(255, 99, 132, 1)",
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "top",
+                            labels: {
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Chart 6: Agreement Status Breakdown Chart
+        const agreementStatusData = @json($agreementStatusData);
+        const agreementStatusCtx = document.getElementById("agreementStatusChart");
+        if (agreementStatusCtx && agreementStatusData.length > 0) {
+            const statusLabels = agreementStatusData.map(item => item.status);
+            const statusCounts = agreementStatusData.map(item => item.count);
+            const colors = [
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(255, 205, 86, 0.8)',
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(153, 102, 255, 0.8)'
+            ];
+
+            new Chart(agreementStatusCtx, {
+                type: "doughnut",
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusCounts,
+                        backgroundColor: colors.slice(0, statusLabels.length),
+                        borderColor: colors.slice(0, statusLabels.length).map(color => color.replace('0.8', '1')),
+                        borderWidth: 2,
+                        hoverBorderWidth: 3,
+                        cutout: '60%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom",
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.raw / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.raw} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Chart 7: Monthly Expiry Trend Chart
+        const monthlyExpiryTrendData = @json($monthlyExpiryTrend);
+        const monthlyExpiryCtx = document.getElementById("monthlyExpiryChart");
+        if (monthlyExpiryCtx && monthlyExpiryTrendData.length > 0) {
+            const expiryLabels = monthlyExpiryTrendData.map(item => item.period);
+            const expiredData = monthlyExpiryTrendData.map(item => item.expired);
+            const expiringData = monthlyExpiryTrendData.map(item => item.expiring);
+
+            new Chart(monthlyExpiryCtx, {
+                type: "line",
+                data: {
+                    labels: expiryLabels,
+                    datasets: [{
+                        label: "Expired",
+                        data: expiredData,
+                        borderColor: "rgba(255, 99, 132, 1)",
+                        backgroundColor: "rgba(255, 99, 132, 0.2)",
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: "Expiring",
+                        data: expiringData,
+                        borderColor: "rgba(255, 205, 86, 1)",
+                        backgroundColor: "rgba(255, 205, 86, 0.2)",
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "top",
+                            labels: {
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw} agreements`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Chart 8: Expired Agreements Trend Chart
+        const expiredAgreementsData = @json($expiredAgreementsData);
+        const expiredAgreementsCtx = document.getElementById("expiredAgreementsChart");
+        if (expiredAgreementsCtx && expiredAgreementsData.length > 0) {
+            const expiredLabels = expiredAgreementsData.map(item => item.period);
+            const expiredCounts = expiredAgreementsData.map(item => item.expired_count);
+
+            new Chart(expiredAgreementsCtx, {
+                type: "bar",
+                data: {
+                    labels: expiredLabels,
+                    datasets: [{
+                        label: "Expired Agreements",
+                        data: expiredCounts,
+                        backgroundColor: "rgba(255, 99, 132, 0.8)",
+                        borderColor: "rgba(255, 99, 132, 1)",
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.raw} expired agreements`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Chart 9: Expiring Agreements Chart
+        const expiringAgreementsData = @json($expiringAgreementsData);
+        const expiringAgreementsCtx = document.getElementById("expiringAgreementsChart");
+        if (expiringAgreementsCtx && expiringAgreementsData.length > 0) {
+            const expiringLabels = expiringAgreementsData.map(item => item.period);
+            const expiringCounts = expiringAgreementsData.map(item => item.expiring_count);
+
+            new Chart(expiringAgreementsCtx, {
+                type: "bar",
+                data: {
+                    labels: expiringLabels,
+                    datasets: [{
+                        label: "Expiring Agreements",
+                        data: expiringCounts,
+                        backgroundColor: "rgba(255, 205, 86, 0.8)",
+                        borderColor: "rgba(255, 205, 86, 1)",
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.raw} expiring agreements`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
                             }
                         }
                     },

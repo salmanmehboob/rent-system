@@ -2,13 +2,13 @@
 @section('title', $title)
 
 @section('content')
-<div style="max-height: 500px; overflow-y: auto; overflow-x:hidden;">
-    
+<div >
+
      <div class="row mb-3">
-       
+
         <div class="col-md-9 text-end">
-            <button id="addCustomerBtn" class="btn btn-success">Add Customer</button>   
-            <button id="viewCustomerBtn" class="btn btn-primary d-none">All Customers</button>  
+            <button id="addCustomerBtn" class="btn btn-success">Add Customer</button>
+            <button id="viewCustomerBtn" class="btn btn-primary d-none">All Customers</button>
         </div>
     </div>
 
@@ -147,11 +147,11 @@
  <hr>
 
     <div class="row" id="customerListDiv">
-        
+
         <div class="col-md-12 my-4">
             <div class="card">
                 <div class="card-header">
-                   
+
                     <div class="row">
                         <div class="col-md-9">
                         <h4>{{$title}} List</h4>
@@ -304,12 +304,12 @@
         // Edit button
         $(document).on('click', '#editBtn', function(e) {
             e.preventDefault();
- 
-             
+
+
             $('#customerListDiv').addClass('d-none'); // Hide the add button
-            $('#customerFormDiv').removeClass('d-none'); // Show the view button    
+            $('#customerFormDiv').removeClass('d-none'); // Show the view button
             $('#addCustomerBtn').addClass('d-none'); // Hide the add button
-            $('#viewCustomerBtn').removeClass('d-none'); // Show the view button        
+            $('#viewCustomerBtn').removeClass('d-none'); // Show the view button
 
             const $form = $('#customerForm');
             $form.attr('action', $(this).data('url'));
@@ -441,16 +441,16 @@
             $('#customerFormDiv').removeClass('d-none');
             $('.card:has(#customersTable)').parent().parent().addClass('d-none'); // Hide the list card
             $(this).addClass('d-none'); // Hide the add button
-            $('#viewCustomerBtn').removeClass('d-none'); // Show the view button        
+            $('#viewCustomerBtn').removeClass('d-none'); // Show the view button
         });
 
-        // View Customer button click handler   
+        // View Customer button click handler
         $('#viewCustomerBtn').on('click', function(e) {
             e.preventDefault();
             $('#customerFormDiv').addClass('d-none');
-            $('.card:has(#customersTable)').parent().parent().removeClass('d-none'); // Show the list card  
+            $('.card:has(#customersTable)').parent().parent().removeClass('d-none'); // Show the list card
             $('#addCustomerBtn').removeClass('d-none'); // Show the add button
-            $('#viewCustomerBtn').addClass('d-none'); // Hide the view button   
+            $('#viewCustomerBtn').addClass('d-none'); // Hide the view button
         });
 
         // Initialize select2 with allowClear for building filter
@@ -459,5 +459,5 @@
             allowClear: true
         });
     });
-</script>   
+</script>
 @endpush
