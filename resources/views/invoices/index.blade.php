@@ -17,7 +17,7 @@
         <button id="viewInvoiceBtn" class="btn btn-primary d-none">All Invoices</button>
     </div>
 </div>
-<div style="max-height: 700px; overflow-y: auto; overflow-x:hidden;">   
+<div style="max-height: 700px; overflow-y: auto; overflow-x:hidden;">
     <div class="row d-none" id="invoiceFormDiv">
         <div class="col-md-10 mx-5">
             <div class="card">
@@ -29,6 +29,7 @@
                     <form class="ajax-form" id="invoiceForm" data-table="invoicesTable" action="{{ route('invoices.store') }}" method="POST">
                         @csrf
                         <div class="row">
+                            <input type="hidden" id="invoice_id" name="invoice_id">
                             <div class="col-md-5 mx-5">
                                 <div class="form-group mb-2">
                                     <label>Building  <span class="text-danger">*</span></label>
@@ -50,7 +51,7 @@
                                     <span id="customer_idError" class="text-danger"></span>
                                 </div>
 
-                            
+
                                 <div class="form-group mb-2">
                                     <label for="month">Month <span class="text-danger">*</span></label>
                                     <select name="month" id="month" class="form-control select2" style="width: 100%;">
@@ -78,6 +79,7 @@
                                         <option value="Paid">Paid</option>
                                         <option value="Unpaid" selected>Unpaid</option>
                                         <option value="Partially Paid">Partially Paid</option>
+                                        <option value="Dues Adjusted">Dues Adjusted</option>
                                     </select>
                                     <span id="statusError" class="text-danger"></span>
                                 </div>
@@ -92,7 +94,7 @@
                                     <span id="rent_amountError" class="text-danger"></span>
                                 </div>
 
-                                
+
                                 {{-- this is for dues  --}}
                                 <div class="form-group mb-2">
                                     <label for="dues">Previous Dues<span class="text-danger">*</span></label>
@@ -107,12 +109,12 @@
                                     <input type="text" name="total" class="form-control" id="total">
                                     <span id="totalError" class="text-danger"></span>
                                 </div>
-                        
-                                
+
+
                             </div>
                         </div>
 
-                    
+
                         <button type="submit" id="submitBtn" class="btn btn-primary float-right m-2 submit-btn px-4">Save</button>
                         <button type="button" id="cancelBtn" class="btn btn-secondary float-right m-2 d-none">Cancel Update</button>
                     </form>
@@ -131,7 +133,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="m-3">
                             <select id="filterBuilding" class="form-control select2" style="min-width: 180px;">
-                                <option value="">All Buildings</option>
+                                <option value="">All</option>
                                 @foreach ($buildings as $building)
                                     <option value="{{ $building->id }}">{{ $building->name }}</option>
                                 @endforeach
@@ -139,17 +141,17 @@
                         </div>
                         <div class="m-3">
                             <select id="filterCustomer" class="form-control select2" style="min-width: 180px;">
-                                <option value="">All Customers</option>
+                                <option value="">All</option>
                             </select>
                         </div>
 
                     <div class="m-3">
                         <select id="filterStatus" class="form-control select2" style="min-width: 180px;">
-                            <option value="">All Statuses</option>
-                            <option value="paid">Paid</option>
-                            <option value="unpaid">Unpaid</option>
-                            <option value="partially_paid">Partially Paid</option>
-                            <option value="dues_adjusted">Dues Adjusted</option>
+                            <option value="">All</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Unpaid">Unpaid</option>
+                            <option value="Partially Paid">Partially Paid</option>
+                            <option value="Dues Adjusted">Dues Adjusted</option>
                         </select>
                     </div>
                     <div class="m-3">
@@ -175,6 +177,7 @@
                         <table class="table table-bordered" id="invoicesTable" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
+                                    <th>#</th>
                                     <th>Building</th>
                                     <th>Customer</th>
                                     <th>Month</th>
@@ -197,7 +200,7 @@
         <div class="modal fade" id="transactionModal" tabindex="-1" role="dialog" aria-labelledby="transactionModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
-                
+
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title font-weight-bold" id="TransactionModalLabel">
                             <i class="fas fa-chart-pie mr-2"></i>Transaction History
@@ -206,7 +209,7 @@
                             <span aria-hidden="true" style="font-size: 1.5rem;">&times;</span>
                         </button>
                     </div>
-                    
+
                     <div class="modal-body" id="transactionModalBody">
                         <!-- Injected content will appear here -->
                     </div>
@@ -256,7 +259,7 @@
         <div class="modal fade lg" id="payNowModal" tabindex="-1" aria-labelledby="payNowModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    
+
                     <form id="payInvoiceForm" method="POST">
                         @csrf
                         <div class="modal-header bg-primary text-white">
@@ -299,7 +302,7 @@
                                 </table>
 
                                 <table>
-                            
+
                             </table>
 
                             <div class="mb-3">
@@ -328,7 +331,7 @@
 
     </div>
 
- 
+
 </div>
 @endsection
 @push('js')
@@ -364,10 +367,10 @@
                         positionClass: "toast-top-right",
                         preventDuplicates: true,
                     });
-                    
+
                     // 1. Reset the search form
                     $('#transactionForm')[0].reset(); // Replace with your form ID
-                    
+
                     // 2. Refresh the transactions table
                     refreshTransactionsTable();
                 } else {
@@ -389,7 +392,7 @@
         // If using DataTables
         if ($.fn.DataTable.isDataTable('#invoicesTable')) {
             $('#invoicesTable').DataTable().ajax.reload(null, false);
-        } 
+        }
         // If manually loading table
         else {
             loadInvoices();
@@ -402,8 +405,9 @@
 
     $('#building_id').on('change', function() {
         const buildingId = $(this).val();
+        const invoice_id = $('#invoice_id').val();
         if (buildingId) {
-            loadDependentDropdown('/customer-by-building', buildingId, 'customer_id', customerId, 'Select Customer', 'building_id');
+            loadDependentDropdown('/customer-by-building', buildingId, 'customer_id', customerId, 'Select Customer', 'building_id', invoice_id);
         } else {
             $('#customer_id').html('<option value="">Select Customer</option>').trigger('change');
             $('#rent_amount').val('');
@@ -411,10 +415,13 @@
         }
     });
 
-    function loadDependentDropdown(url, parentId, childSelectId, selectedId = null, defaultText = 'Select', parentKey) {
+    function loadDependentDropdown(url, parentId, childSelectId, selectedId = null, defaultText = 'Select', parentKey, invoiceID) {
         if (!parentKey) return;
 
         const data = { [parentKey]: parentId };
+        if (invoiceID) {
+            data.invoice_id = invoiceID;
+        }
         if (selectedId) {
             data.customer_id = selectedId;
         }
@@ -426,18 +433,23 @@
             success: function(data) {
                 const $select = $(`#${childSelectId}`);
                 let options = `<option value="">${defaultText}</option>`;
-              
 
                 data.forEach(item => {
-                 
                     options += `<option data-dues="${item.dues}" data-rent="${item.rent_amount}" value="${item.id}">${item.name}</option>`;
                 });
 
                 $select.html(options);
-                
+
                 // Refresh Select2 if it exists
                 if ($select.hasClass('select2-hidden-accessible')) {
                     $select.trigger('change.select2');
+                }
+
+                // If we're in edit mode and have a selectedId, set it after populating
+                if (selectedId && invoiceID) {
+                    setTimeout(() => {
+                        $select.val(selectedId).trigger('change');
+                    }, 100);
                 }
             },
             error: function() {
@@ -452,13 +464,9 @@
         const selectedOption = $(this).find('option:selected');
         const dues = selectedOption.data('dues') || 0;
         const rent = selectedOption.data('rent') || 0;
-        
-
-        console.log(rent , dues)
-
         $('#rent_amount').val(rent);
         $('#dues').val(dues);
-        
+
         // Calculate total immediately after populating
         calculateTotal();
     });
@@ -473,9 +481,11 @@
         const rent = parseFloat($('#rent_amount').val()) || 0;
         const dues = parseFloat($('#dues').val()) || 0;
         const subtotal = rent + dues;
+        console.log('calculateTotal' )
+        console.log(  rent , dues)
         $('#total').val(subtotal.toFixed(2)); // Format to 2 decimal places
     }
-   
+
 
     // --- Building/Customer filter logic ---
     $('#filterBuilding').on('change', function() {
@@ -524,8 +534,9 @@
                 }
             },
             columns: [
+                { data: 'invoice_id', name: 'invoice_id' },
                 { data: 'building', name: 'building' },
-                { data: 'customer', name: 'customer' }, 
+                { data: 'customer', name: 'customer' },
                 {
                     data: null,
                     name: 'month_year',
@@ -542,15 +553,15 @@
                 { data: 'actions', name: 'actions', orderable: false, searchable: false },
             ]
         });
-         
-        //pay now button 
+
+        //pay now button
         $(document).on('click', '.payNowBtn', function (e) {
             e.preventDefault();
 
             const $form = $('#payInvoiceForm');
             $form.attr('action', $(this).data('url'));
             $form.append('<input type="hidden" name="_method" value="PUT">');
-            
+
             const id = $(this).data('id');
             const name = $(this).data('name');
             const month = $(this).data('month');
@@ -571,7 +582,7 @@
             $('#payNowModal').modal('show');
         });
 
-        // Transaction history button 
+        // Transaction history button
        $(document).on('click', '.transactionHistoryBtn', function (e) {
             e.preventDefault();
 
@@ -586,10 +597,11 @@
                 type: 'POST',
                 data: {
                     _token: $('meta[name="csrf-token"]').attr('content'),
+                    id : id
                 },
                 success: function (response) {
                     if (response.transactions && response.transactions.length > 0) {
-                        let html = '<table class="table table-bordered"><thead><tr><th>Customer</th><th>Month</th><th>Paid</th><th>Previous Dues</th><th>Note</th><th>Date</th></tr></thead><tbody>';
+                        let html = '<table class="table table-bordered"><thead><tr><th>Customer</th><th>Month</th><th>Paid</th><th>Dues</th><th>Note</th><th>Date</th></tr></thead><tbody>';
                         response.transactions.forEach(transaction => {
                             const dateObj = new Date(transaction.created_at);
                             const customerName = transaction.invoice?.customer?.name ?? '';
@@ -650,18 +662,34 @@
             $('#addInvoiceBtn').addClass('d-none');
             $('#viewInvoiceBtn').removeClass('d-none');
 
-            // Fill the form fields with invoice data
-            $('#building_id').val($(this).data('building_id')).trigger('change');
-            // Wait for customer dropdown to populate if needed
-            setTimeout(() => {
-                $('#customer_id').val($(this).data('customer_id')).trigger('change');
-            }, 300);
+            // Store the customer ID to set after building loads
+            const customerIdToSet = $(this).data('customer_id');
+
+            $('#invoice_id').val($(this).data('id'));
             $('#month').val($(this).data('month')).trigger('change');
             $('#year').val($(this).data('year')).trigger('change');
             $('#rent_amount').val($(this).data('rent_amount'));
             $('#dues').val($(this).data('dues'));
             $('#total').val((parseFloat($(this).data('rent_amount')) + parseFloat($(this).data('dues'))).toFixed(2));
-            $('#status').val($(this).data('status')).trigger('change');
+            // Map status value to match select options
+            const statusMap = {
+                'paid': 'Paid',
+                'unpaid': 'Unpaid',
+                'partially_paid': 'Partially Paid',
+                'Paid': 'Paid',
+                'Unpaid': 'Unpaid',
+                'Partially Paid': 'Partially Paid'
+            };
+            const statusValue = statusMap[$(this).data('status')] || $(this).data('status');
+            $('#status').val(statusValue).trigger('change');
+
+            // Fill the form fields with invoice data
+            $('#building_id').val($(this).data('building_id')).trigger('change');
+
+            // Wait for customer dropdown to populate and then set the customer
+            setTimeout(() => {
+                $('#customer_id').val(customerIdToSet).trigger('change');
+            }, 500);
 
             // Set form action to update
             $('#invoiceForm').attr('action', $(this).data('url'));
@@ -686,6 +714,12 @@
             $('#invoiceListDiv').removeClass('d-none');
             $('#addInvoiceBtn').removeClass('d-none');
             $('#viewInvoiceBtn').addClass('d-none');
+
+            // Clear customer dropdown and reset related fields
+            $('#customer_id').html('<option value="">Select Customer</option>').trigger('change');
+            $('#rent_amount').val('');
+            $('#dues').val('');
+            $('#total').val('');
         });
 
         // Initialize select2 with allowClear for all relevant selects

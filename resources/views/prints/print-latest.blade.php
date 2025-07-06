@@ -105,40 +105,39 @@
             </div>
 
             <table class="line-table">
-                <tr>
-                <th>Month</th>
-                <td>{{ $invoice->month }}-{{ $invoice->year }}</td>
-                </tr>
-                <tr>
-                <th>Monthly Rent</th>
-                <td>{{ $invoice->rent_amount }}</td>
-                </tr>
-                <tr>
-                <th>Previous Dues</th>
-                <td>{{ $invoice->dues }}</td>
-                </tr>
-                <tr>
-                <th>Total paid</th>
-                <td>{{ $invoice->paid }}</td>
-                </tr>
-                <tr>
-                <th>Grand Total</th>
-                <td>{{ $invoice->remaining }}</td>
-                </tr>
-            </table>
+      <tr>
+        <th>Month</th>
+        <td>{{ $invoice->month }}-{{ $invoice->year }}</td>
+      </tr>
+      <tr>
+        <th>Monthly Rent</th>
+        <td>{{ number_format($invoice->rent_amount, 2) }}</td>
+      </tr>
+      <tr>
+        <th>Previous Dues</th>
+        <td>{{ number_format($invoice->dues, 2) }}</td>
+      </tr>
+      <tr>
+        <th>Total Amount</th>
+        <td>{{ number_format($invoice->total, 2) }}</td>
+      </tr>
+      
+       
+    </table>
 
-            <table class="line-table">
-                <tr>
-                <th>Payment Status</th>
-                <th>Payable Amount</th>
-                <th>Current Dues</th>
-                </tr>
-                <tr>
-                <td>{{ $invoice->status }}</td>
-                <td style="text-align: center; "></td>
-                <td style="text-align: right;"></td>
-                </tr>
-            </table>
+    <table class="line-table">
+      <tr>
+        <th>Payment Status</th>
+        <th>Total Paid</th>
+        <th colspan="2">Current Dues</th>
+      </tr>
+      <tr>
+        <td>{{ $invoice->status }}</td>
+        <td>{{ number_format($invoice->paid, 2) }}</td>
+
+        <td colspan="2" style="text-align: right;">{{ number_format($invoice->remaining, 2) }}</td>
+      </tr>
+    </table>
 
             <div class="urdu">
                 برائے کرم 5 تاریخ سے پہلے ادائیگی ادا کریں۔ شکریہ

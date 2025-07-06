@@ -10,7 +10,7 @@
     <meta name="author" content="">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Admin Dashboard</title>
+    <title>Rent System</title>
 
     @include('layouts.header_files')
 
@@ -20,7 +20,7 @@
             height: 100%;
         }
     </style> --}}
- 
+
 </head>
 
 <body id="page-top">

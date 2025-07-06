@@ -102,30 +102,31 @@
       </tr>
       <tr>
         <th>Monthly Rent</th>
-        <td>{{ $invoice->rent_amount }}</td>
+        <td>{{ number_format($invoice->rent_amount, 2) }}</td>
       </tr>
       <tr>
         <th>Previous Dues</th>
-        <td>{{ $invoice->dues }}</td>
+        <td>{{ number_format($invoice->dues, 2) }}</td>
       </tr>
       <tr>
-        <th>Total Paid</th>
-        <td>{{ $invoice->paid }}</td>
+        <th>Total Amount</th>
+        <td>{{ number_format($invoice->total, 2) }}</td>
       </tr>
-      <tr>
-        <th>Grand Total</th>
-        <td>{{ $invoice->total }}</td>
-      </tr>
+      
+       
     </table>
 
     <table class="line-table">
       <tr>
         <th>Payment Status</th>
+        <th>Total Paid</th>
         <th colspan="2">Current Dues</th>
       </tr>
       <tr>
         <td>{{ $invoice->status }}</td>
-        <td colspan="2" style="text-align: right;">{{ $invoice->remaining }}</td>
+        <td>{{ number_format($invoice->paid, 2) }}</td>
+
+        <td colspan="2" style="text-align: right;">{{ number_format($invoice->remaining, 2) }}</td>
       </tr>
     </table>
 

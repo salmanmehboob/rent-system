@@ -48,6 +48,62 @@ class Invoice extends Model
         return $this->hasMany(Transaction::class);
     }
 
+    /**
+     * Get the formatted rent amount
+     */
+    public function getFormattedRentAmountAttribute()
+    {
+        return number_format($this->rent_amount, 2);
+    }
+
+    /**
+     * Get the formatted dues amount
+     */
+    public function getFormattedDuesAttribute()
+    {
+        return number_format($this->dues, 2);
+    }
+
+    /**
+     * Get the formatted total amount
+     */
+    public function getFormattedTotalAttribute()
+    {
+        return number_format($this->total, 2);
+    }
+
+    /**
+     * Get the formatted paid amount
+     */
+    public function getFormattedPaidAttribute()
+    {
+        return number_format($this->paid, 2);
+    }
+
+    /**
+     * Get the formatted remaining amount
+     */
+    public function getFormattedRemainingAttribute()
+    {
+        return number_format($this->remaining, 2);
+    }
+
+    /**
+     * Calculate the total amount (rent + dues)
+     */
+    public function calculateTotal()
+    {
+        return $this->rent_amount + $this->dues;
+    }
+
+    /**
+     * Calculate the remaining amount (total - paid)
+     */
+    public function calculateRemaining()
+    {
+        return max(0, $this->total - $this->paid);
+    }
+
     protected static function boot()
     {
         parent::boot();

@@ -11,19 +11,20 @@
         $startYear = $currentYear - 20;
 
     @endphp
+    @if(session('custom_success'))
+        <div class="alert alert-success">
+            {{ session('custom_success') }}
+        </div>
+    @endif
+
+
+    @if(session('custom_error'))
+        <div class="alert alert-danger">
+            {{ session('custom_error') }}
+        </div>
+    @endif
     <div class="row">
-      @if(session('custom_success'))
-            <div class="alert alert-success">
-              {{ session('custom_success') }}
-           </div>
-        @endif
 
-
-      @if(session('custom_error'))
-           <div class="alert alert-danger">
-                {{ session('custom_error') }}
-           </div>
-      @endif
         <div class="col-md-8 mx-5">
             <div class="card">
                 <div class="card-header" style="display: flex;">

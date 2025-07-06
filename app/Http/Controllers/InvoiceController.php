@@ -27,23 +27,26 @@ class InvoiceController extends Controller
                 'agreement',
                 'transactions'
             ])
-            ->when($request->building_id, function ($query) use ($request) {
-                $query->where('building_id', $request->building_id);
-            })
-            ->when($request->customer_id, function ($query) use ($request) {
-                $query->where('customer_id', $request->customer_id);
-            })
-            ->when($request->status, function ($query) use ($request) {
-                $query->where('status', $request->status);
-            })
-            ->when($request->month, function ($query) use ($request) {
-                $query->where('month', $request->month);
-            })
-            ->when($request->year, function ($query) use ($request) {
-                $query->where('year', $request->year);
-            })
-            ->get();
+                ->when($request->building_id, function ($query) use ($request) {
+                    $query->where('building_id', $request->building_id);
+                })
+                ->when($request->customer_id, function ($query) use ($request) {
+                    $query->where('customer_id', $request->customer_id);
+                })
+                ->when($request->status, function ($query) use ($request) {
+                    $query->where('status', $request->status);
+                })
+                ->when($request->month, function ($query) use ($request) {
+                    $query->where('month', $request->month);
+                })
+                ->when($request->year, function ($query) use ($request) {
+                    $query->where('year', $request->year);
+                })
+                ->get();
             return DataTables()->of($invoices)
+                ->addColumn('invoice_id', function ($invoice) {
+                    return $invoice->id ?? 'N/A';
+                })
                 ->addColumn('building', function ($invoice) {
                     return $invoice->building->name ?? 'N/A';
                 })
@@ -67,8 +70,7 @@ class InvoiceController extends Controller
 
                     return '<span class="badge ' . $badgeClass . '">' . $statusText . '</span>';
                 })
-
-                 ->addColumn('type', function ($invoice) {
+                ->addColumn('type', function ($invoice) {
                     if ($invoice->type === 'Current') {
                         $statusText = 'Current';
                         $badgeClass = 'badge-success';
@@ -89,8 +91,9 @@ class InvoiceController extends Controller
                         title="Print Invoice"><i class="fa fa-print"></i></a>
                         ';
 
-                             // Add Edit button for Current invoices
-                       $buttons .= '
+                    if ($invoice->status === 'Unpaid') {
+                        // Add Edit button for Current invoices
+                        $buttons .= '
                        <a href="#"
                        class="btn btn-warning shadow btn-sm sharp mx-2 editInvoiceBtn"
                        title="Edit Invoice"
@@ -111,11 +114,11 @@ class InvoiceController extends Controller
                        <i class="fas fa-edit"></i>
                        </a>
                    ';
-
+                    }
 
                     // Show Print button only if remaining > 0
                     if ($invoice->type === 'Current') {
-                        if($invoice->remaining > 0) {
+                        if ($invoice->remaining > 0) {
 
                             $buttons .= '
 
@@ -135,7 +138,7 @@ class InvoiceController extends Controller
                             ';
                         }
 
-                        $buttons .='<a href="javascript:void(0)"
+                        $buttons .= '<a href="javascript:void(0)"
                             data-url="' . route('invoices.transactions', $invoice->id) . '"
                             class="btn btn-primary shadow btn-sm sharp mx-2 transactionHistoryBtn"
                             data-id="' . $invoice->id . '"
@@ -148,9 +151,8 @@ class InvoiceController extends Controller
 
                     return $buttons;
                 })
-
-            ->rawColumns(['status', 'type', 'actions'])
-            ->make(true);
+                ->rawColumns(['status', 'type', 'actions'])
+                ->make(true);
         }
 
         return view('invoices.index', compact('title', 'buildings'));
@@ -191,22 +193,23 @@ class InvoiceController extends Controller
                 $customer = Customer::find($validatedData['customer_id']);
 
                 $agreement = Customer::find($validatedData['customer_id'])?->agreements()
-                ->where('status', 'active')
-                ->latest()
-                ->first();
+                    ->where('status', 'active')
+                    ->latest()
+                    ->first();
 
                 if (!$agreement) {
                     return response()->json([
                         'errors' => [
-                            'global' => ['No active agreement found for '. $customer->name .'.']
+                            'global' => ['No active agreement found for ' . $customer->name . '.']
                         ]
                     ], 422);
 
                 }
 
                 $validatedData['agreement_id'] = $agreement->id;
-                $validatedData['remaining'] = $validatedData['dues'] + $validatedData['rent_amount'];
+                $validatedData['total'] = $validatedData['dues'] + $validatedData['rent_amount'];
                 $validatedData['paid'] = $validatedData['paid'] ?? 0;
+                $validatedData['remaining'] = $validatedData['total'] - $validatedData['paid'];
 
 
                 // Prepare the new invoice date
@@ -240,7 +243,7 @@ class InvoiceController extends Controller
 
 
                 // dd($validatedData);
-                 $invoice = Invoice::create($validatedData);
+                $invoice = Invoice::create($validatedData);
 
                 DB::commit();
 
@@ -304,83 +307,74 @@ class InvoiceController extends Controller
     }
 
 
-
-
     public function paid(Request $request, $id)
     {
-            $validatedData = $request->validate([
-                'paid' => 'required|numeric',
-                'note' => 'required|string',
-            ]);
+        $validatedData = $request->validate([
+            'paid' => 'required|numeric',
+            'note' => 'required|string',
+        ]);
 
-            try {
-                DB::beginTransaction();
+        try {
+            DB::beginTransaction();
 
-                $invoice = Invoice::find($id);
+            $invoice = Invoice::find($id);
 
-                // Subtract the amount from dues
-                $paidAmount = $validatedData['paid'];
-                $remaining = $invoice->remaining - $paidAmount;
-                $remaining = $remaining < 0 ? 0 : $remaining;
+            // Calculate new paid amount and remaining
+            $paidAmount = $validatedData['paid'];
+            $newPaidAmount = $invoice->paid + $paidAmount;
+            $remaining = max(0, $invoice->total - $newPaidAmount);
 
-                $rentDues = $invoice->rent_amount + $invoice->dues;
+            // Determine new status
+            if ($remaining == 0) {
+                $status = 'Paid';
+            } elseif ($newPaidAmount > 0) {
+                $status = 'Partially Paid';
+            } else {
+                $status = 'Unpaid';
+            }
 
-                 // Determine new status
-                if ($remaining == 0) {
-                    $status = 'Paid';
-                } elseif ($remaining < $rentDues) {
-                    $status = 'Partially Paid';
-                } else {
-                    $status = 'Unpaid';
-                }
-
-                // Update invoice
-                $invoice->remaining = $remaining;
-                $invoice->status = $status;
-                $invoice->paid += $paidAmount;
-                // If fully paid, reset dues
-                if ($remaining == 0) {
-                    $invoice->dues = 0;
-                }
-                $invoice->save();
+            // Update invoice
+            $invoice->remaining = $remaining;
+            $invoice->status = $status;
+            $invoice->paid = $newPaidAmount;
+            $invoice->save();
 
 
-                 $transactionData = [
+            $transactionData = [
                 'invoice_id' => $invoice->id,
-                'paid' =>  $validatedData['paid'],
-                'year' =>$invoice->year,
+                'paid' => $validatedData['paid'],
+                'year' => $invoice->year,
                 'month' => $invoice->month,
-                'remaining' =>  $remaining,
+                'remaining' => $remaining,
                 'note' => $validatedData['note'],
             ];
 
-                 // insert the data into transactions table
-                Transaction::create($transactionData);
+            // insert the data into transactions table
+            Transaction::create($transactionData);
 
-                DB::commit();
+            DB::commit();
 
-              return redirect()->route('invoices.index')->with('success','Invoice Paid Successfully');
-            } catch (\Exception $e) {
-                DB::rollBack();
-                // dd($e->getMessage());
-                return redirect()->route('invoices.index')->with('error',$e->getMessage());
-
-
-            }
-
-     }
+            return redirect()->route('invoices.index')->with('success', 'Invoice Paid Successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // dd($e->getMessage());
+            return redirect()->route('invoices.index')->with('error', $e->getMessage());
 
 
+        }
+
+    }
 
 
     public function getByBuilding(Request $request)
     {
         $buildingId = $request->building_id;
         $customerId = $request->customer_id;
+        $invoice_id = $request->invoice_id;
 
         $query = Customer::withTrashed()
             ->with(['agreements.roomShops', 'invoices'])
-            ->where(function($q) use ($buildingId, $customerId) {
+            ->where(function ($q) use ($buildingId, $customerId) {
                 if ($buildingId) {
                     $q->where('building_id', $buildingId);
                 }
@@ -390,7 +384,7 @@ class InvoiceController extends Controller
                 }
             });
 
-        $customers = $query->get()->map(function ($customer) {
+        $customers = $query->get()->map(function ($customer) use ($invoice_id) {
             $agreement = $customer->agreements->first();
 
             $roomCount = $agreement && $agreement->roomShops
@@ -400,10 +394,28 @@ class InvoiceController extends Controller
             $monthlyRent = $agreement->monthly_rent ?? 0;
             $totalRent = $monthlyRent * $roomCount;
 
-            // $latestInvoice = $customer->invoices()->latest()->first();
-            // $totalDues = $latestInvoice?->dues ?? 0;
-            $latestInvoice = $customer->invoices()->latest()->first();
-            $dues = $latestInvoice?->remaining ?? 0;
+            // Calculate dues based on invoices earlier than the specified invoice_id
+            $dues = 0;
+            if ($invoice_id) {
+                // Get the target invoice to understand its date
+                $targetInvoice = Invoice::find($invoice_id);
+                if ($targetInvoice) {
+                    // Get invoices for this customer that are earlier than the target invoice
+                    $earlierInvoices = $customer->invoices()
+                        ->where('id', '<', $invoice_id)
+                        ->orderBy('id', 'desc')
+                        ->get();
+
+                    // Calculate total dues from earlier invoices
+                    foreach ($earlierInvoices as $invoice) {
+                        $dues += $invoice->remaining;
+                    }
+                }
+            } else {
+                // If no invoice_id provided, get the latest invoice dues
+                $latestInvoice = $customer->invoices()->latest()->first();
+                $dues = $latestInvoice?->dues ?? 0;
+            }
 
             return [
                 'id' => $customer->id,
@@ -423,7 +435,8 @@ class InvoiceController extends Controller
         // Get all transactions for the same customer, across all invoices
         $transactions = Transaction::with('invoice.customer')
             ->whereHas('invoice', function ($query) use ($invoice) {
-               $query->where('customer_id', $invoice->customer_id);
+                $query->where('customer_id', $invoice->customer_id);
+                $query->where('invoice_id', $invoice->id);
             })
             ->get();
 
@@ -442,7 +455,7 @@ class InvoiceController extends Controller
 
     public function combine(Request $request)
     {
-          $validatedData = $request->validate([
+        $validatedData = $request->validate([
             'building_id' => 'required|exists:buildings,id',
             'month' => 'required|string',
             'year' => 'required|string',
@@ -451,7 +464,7 @@ class InvoiceController extends Controller
         try {
             DB::beginTransaction();
 
-            $customers = Customer::with(['agreements' => function($query) use ($validatedData) {
+            $customers = Customer::with(['agreements' => function ($query) use ($validatedData) {
                 $monthNumber = \DateTime::createFromFormat('F', $validatedData['month'])->format('n');
 
                 $query->where('status', 'Active')
@@ -461,18 +474,18 @@ class InvoiceController extends Controller
                         1
                     )->endOfMonth());
             }, 'agreements.roomShops'])
-            ->where('building_id', $validatedData['building_id'])
-            ->whereHas('agreements', function($query) use ($validatedData) {
-                $monthNumber = \DateTime::createFromFormat('F', $validatedData['month'])->format('n');
+                ->where('building_id', $validatedData['building_id'])
+                ->whereHas('agreements', function ($query) use ($validatedData) {
+                    $monthNumber = \DateTime::createFromFormat('F', $validatedData['month'])->format('n');
 
-                $query->where('status', 'Active')
-                    ->whereDate('start_date', '<=', Carbon::createFromDate(
-                        $validatedData['year'],
-                        $monthNumber,
-                        1
-                    )->endOfMonth());
-            })
-            ->get();
+                    $query->where('status', 'Active')
+                        ->whereDate('start_date', '<=', Carbon::createFromDate(
+                            $validatedData['year'],
+                            $monthNumber,
+                            1
+                        )->endOfMonth());
+                })
+                ->get();
 
             $insertedCount = 0;
             $skippedCount = 0;
@@ -544,19 +557,19 @@ class InvoiceController extends Controller
 
                 // Create the invoice with proper values
                 Invoice::create([
-                    'building_id'     => $validatedData['building_id'],
-                    'customer_id'     => $customer->id,
-                    'agreement_id'    => $agreement->id,
-                    'month'           => $validatedData['month'],
-                    'year'            => $validatedData['year'],
-                    'rent_amount'     => $rentAmount,
-                    'dues'            => $previousDues,
-                    'paid'            => 0, // Default to 0 for new invoices
-                    'total'           => $total,
-                    'remaining'       => $total, // Initially remaining equals total
-                    'type'            => $type,
-                    'status'          => $type === 'Previous' ? 'Dues Adjusted' : 'Unpaid',
-                    'is_active'       => true,
+                    'building_id' => $validatedData['building_id'],
+                    'customer_id' => $customer->id,
+                    'agreement_id' => $agreement->id,
+                    'month' => $validatedData['month'],
+                    'year' => $validatedData['year'],
+                    'rent_amount' => $rentAmount,
+                    'dues' => $previousDues,
+                    'paid' => 0, // Default to 0 for new invoices
+                    'total' => $total,
+                    'remaining' => $total, // Initially remaining equals total
+                    'type' => $type,
+                    'status' => $type === 'Previous' ? 'Dues Adjusted' : 'Unpaid',
+                    'is_active' => true,
                 ]);
 
                 $insertedCount++;
@@ -568,7 +581,7 @@ class InvoiceController extends Controller
                 return redirect()->back()->with('custom_error', 'No new bills generated. All customers already have invoices for this period.');
             }
 
-           $message = "{$insertedCount} bills generated successfully.";
+            $message = "{$insertedCount} bills generated successfully.";
             if ($skippedCount > 0) {
                 $message .= " {$skippedCount} customers skipped (already had invoices).";
             }

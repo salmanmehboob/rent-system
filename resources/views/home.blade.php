@@ -11,8 +11,9 @@
                 class="fas fa-download fa-sm text-white-50"></i> Generate Report
             </button>
         </div>
+
         <!-- Modal -->
-       <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+        <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-top">
                 <div class="modal-content border-0 shadow-lg">
 
@@ -51,7 +52,7 @@
         <!-- Content Row -->
         <div class="row">
 
-                <!-- Stylish Last Bills Generated Card -->
+            <!-- Stylish Last Bills Generated Card -->
             <div class="col-xl-12 col-md-12 mb-4">
                 <div class="card shadow bg-gradient-info text-white">
                     <div class="card-body">
@@ -161,34 +162,46 @@
         </div>
     </div>
 
-    
-    <div class="row">
+    <!-- Charts Row -->
+    <div class="row mb-3">
         <div class="col-md-6">
-            <h4>Total Invoices Amount: {{ number_format($total) }}</h4>
-            <div id="invoiceChart" style="width: 100%; height: 250px; margin: auto;"></div>
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Total Invoices Amount: {{ number_format($total) }}</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="invoiceChart" width="400" height="200"></canvas>
+                </div>
+            </div>
         </div>
         <div class="col-md-6">
-            <h4>Top 10 customers with highest dues</h4>
-            <div id="topCustomersChart" style="width: 100%; height: 250px; margin: auto;"></div>
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Top 10 Customers with Highest Dues</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="topCustomersChart" width="400" height="200"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
-
-    <div class="row">
+    <!-- Reports Row -->
+    <div class="row mb-3">
         <div class="col-md-12">
-            <div class="card">
+            <div class="card shadow">
                 <div class="card-header">
-                    <h4>Reports</46>
+                    <h6 class="m-0 font-weight-bold text-primary">Reports Summary</h6>
                 </div>
                 <div class="card-body">
                     <div id="formError" class="alert alert-danger d-none"></div>
                     <div class="table-responsive">
-                        <table class="table table-bordered"  width="100%" cellspacing="0">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
                                     <th>Total Collection</th>
                                     <th>Total Dues</th>
-                                    <th>Total available rooms</th>
+                                    <th>Total Available Rooms</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -204,19 +217,21 @@
             </div>
         </div>
     </div>
-    <div class="row">
+
+    <!-- Expired Agreements Row -->
+    <div class="row mb-3">
         <div class="col-md-12">
-            <div class="card">
+            <div class="card shadow">
                 <div class="card-header">
-                    <h4>Expired Agreements</h4>
+                    <h6 class="m-0 font-weight-bold text-primary">Expired Agreements</h6>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered"  width="100%" cellspacing="0">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
                                     <th>Customer Name</th>
-                                     <th>Start Date</th>
+                                    <th>Start Date</th>
                                     <th>End Date</th>
                                     <th>Status</th>
                                 </tr>
@@ -225,13 +240,13 @@
                                 @foreach ($expiredAgreements as $agreement)
                                     <tr>
                                         <td>{{ $agreement->customer->name }}</td>
-                                         <td>{{ $agreement->start_date }}</td>   
+                                        <td>{{ $agreement->start_date }}</td>
                                         <td>{{ $agreement->end_date }}</td>
-                                     @if($agreement->status === 'inactive')
-                                        <td><span class="badge badge-danger">Expired</span></td>
-                                    @else
-                                        <td>{{ $agreement->status }}</td>
-                                    @endif
+                                        @if($agreement->status === 'inactive')
+                                            <td><span class="badge badge-danger">Expired</span></td>
+                                        @else
+                                            <td>{{ $agreement->status }}</td>
+                                        @endif
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -241,39 +256,41 @@
             </div>
         </div>
     </div>
-    <div class="row">
+
+    <!-- Expiring Agreements Row -->
+    <div class="row mb-3">
         <div class="col-md-12">
-            <div class="card">
+            <div class="card shadow">
                 <div class="card-header">
-                    <h4>Expiring Agreements</h4>
+                    <h6 class="m-0 font-weight-bold text-primary">Expiring Agreements</h6>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered"  width="100%" cellspacing="0">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
                                     <th>Customer Name</th>
-                                     <th>Start Date</th>
+                                    <th>Start Date</th>
                                     <th>End Date</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody> 
+                            <tbody>
                                 @foreach ($expiringThisMonth as $agreement)
                                     <tr>
                                         <td>{{ $agreement->customer->name }}</td>
-                                         <td>{{ $agreement->start_date }}</td>   
-                                        <td>{{ $agreement->end_date }}</td> 
-                                     @if($agreement->status === 'active')
-                                        <td><span class="badge badge-success">Active</span></td>
-                                    @else
-                                        <td>{{ $agreement->status }}</td>  
-                                    @endif
+                                        <td>{{ $agreement->start_date }}</td>
+                                        <td>{{ $agreement->end_date }}</td>
+                                        @if($agreement->status === 'active')
+                                            <td><span class="badge badge-success">Active</span></td>
+                                        @else
+                                            <td>{{ $agreement->status }}</td>
+                                        @endif
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
-                    </div>  
+                    </div>
                 </div>
             </div>
         </div>
@@ -281,156 +298,195 @@
 @endsection
 
 @push('js')
-    <script>
-        $(document).ready(function () {
-            $('.select2').select2({
-             dropdownParent: $('#reportModal')
-            });
+ <script src="{{asset('assets/vendor/chart.js/chart-4-5.js')}}"></script>
 
-            $('#goToReport').on('click', function () {
-                let selected = $('#reportType').val();
-                if (!selected) {
-                    alert('Please select a report type.');
-                    return;
-                }
+<script>
+    $(document).ready(function () {
+        $('.select2').select2({
+            dropdownParent: $('#reportModal')
+        });
 
-                switch (selected) {
-                    case 'customers':
+        $('#goToReport').on('click', function () {
+            let selected = $('#reportType').val();
+            if (!selected) {
+                alert('Please select a report type.');
+                return;
+            }
+
+            switch (selected) {
+                case 'customers':
                     window.location.href = "{{ route('reports.customers') }}";
                     break;
-                    case 'dues':
+                case 'dues':
                     window.location.href = "{{ route('reports.dues') }}";
                     break;
-                    case 'buildings':
+                case 'buildings':
                     window.location.href = "{{ route('reports.buildings') }}";
                     break;
+            }
+        });
+    });
+
+    // Initialize Charts when DOM is ready
+    document.addEventListener("DOMContentLoaded", function () {
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not loaded');
+            return;
+        }
+
+        // Chart 1: Invoice Doughnut Chart with Chart.js 4.5 features
+        const invoiceCtx = document.getElementById("invoiceChart");
+        if (invoiceCtx) {
+            new Chart(invoiceCtx, {
+                type: "doughnut",
+                data: {
+                    labels: ["Paid", "Dues"],
+                    datasets: [{
+                        data: [{{ (float) $paid }}, {{ (float) $dues }}],
+                        backgroundColor: [
+                            "rgba(75, 192, 192, 0.8)",
+                            "rgba(255, 99, 132, 0.8)"
+                        ],
+                        borderColor: [
+                            "rgba(75, 192, 192, 1)",
+                            "rgba(255, 99, 132, 1)"
+                        ],
+                        borderWidth: 2,
+                        hoverBorderWidth: 3,
+                        cutout: '60%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom",
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.raw / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.raw.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
                 }
             });
-        });
+        }
 
-        am5.ready(function() {
-            // Create root element
-            var root = am5.Root.new("invoiceChart");
+        // Chart 2: Top Customers Horizontal Bar Chart with Chart.js 4.5 features
+        const topCustomers = @json($topCustomers);
+        const labels = topCustomers.map(item => item.customer_name);
+        const data = topCustomers.map(item => item.total_due);
 
-            // Set theme
-            root.setThemes([
-                am5themes_Animated.new(root)
-            ]);
-
-            // Create chart
-            var chart = root.container.children.push(
-                am5percent.PieChart.new(root, {
-                    layout: root.verticalLayout
-                })
-            );
-
-            // Create series
-            var series = chart.series.push(
-                am5percent.PieSeries.new(root, {
-                    name: "Invoices",
-                    valueField: "value",
-                    categoryField: "status"
-                })
-            );
-
-            // Set data (cast values as float in Blade to avoid issues)
-            series.data.setAll([
-                { status: "Paid", value: {{ (float) $paid }} },
-                { status: "Dues", value: {{ (float) $dues }} }
-            ]);
-
-            // Labels with value only
-            series.labels.template.setAll({
-                text: "{category}: {value}"
+        const topCustomersCtx = document.getElementById("topCustomersChart");
+        if (topCustomersCtx) {
+            new Chart(topCustomersCtx, {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Total Due",
+                        data: data,
+                        backgroundColor: "rgba(54, 162, 235, 0.8)",
+                        borderColor: "rgba(54, 162, 235, 1)",
+                        borderWidth: 1,
+                        hoverBackgroundColor: "rgba(54, 162, 235, 1)",
+                        borderRadius: 4,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: "y", // horizontal bar
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function (context) {
+                                    return `${context.label}: ${context.raw.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                },
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: "rgba(0, 0, 0, 0.1)",
+                                drawBorder: false
+                            },
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 0,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
             });
-
-            // Tooltip with value only
-            series.slices.template.setAll({
-                tooltipText: "{category}: {value} ({value.percent.formatNumber('0.0')}%)"
-            });
-
-            // Add legend
-            chart.children.push(
-                am5.Legend.new(root, {
-                    centerX: am5.p50,
-                    x: am5.p50
-                })
-            );
-        });
-
-
-
-
-        am5.ready(function() {
-            const topCustomersData = @json($topCustomers);
-            var root = am5.Root.new("topCustomersChart");
-
-            root.setThemes([am5themes_Animated.new(root)]);
-
-            var chart = root.container.children.push(
-                am5xy.XYChart.new(root, {
-                    layout: root.verticalLayout
-                })
-            );
-
-            // Add axes
-            var xAxis = chart.xAxes.push(
-                am5xy.ValueAxis.new(root, {
-                    renderer: am5xy.AxisRendererX.new(root, {}),
-                    tooltip: am5.Tooltip.new(root, {})
-                })
-            );
-
-            var yAxis = chart.yAxes.push(
-                am5xy.CategoryAxis.new(root, {
-                    categoryField: "customer_name",
-                    renderer: am5xy.AxisRendererY.new(root, {
-                        minGridDistance: 20
-                    })
-                })
-            );
-
-            yAxis.data.setAll(topCustomersData);
-
-            // Add series
-            var series = chart.series.push(
-                am5xy.ColumnSeries.new(root, {
-                    name: "Dues",
-                    xAxis: xAxis,
-                    yAxis: yAxis,
-                    valueXField: "total_due",
-                    categoryYField: "customer_name",
-                    tooltip: am5.Tooltip.new(root, {
-                        labelText: "{categoryY}: {valueX}"
-                    })
-                })
-            );
-
-            // Add value labels inside bars
-            series.bullets.push(function() {
-                return am5.Bullet.new(root, {
-                    locationX: 1,
-                    sprite: am5.Label.new(root, {
-                        text: "{valueX}",
-                        fill: am5.color(0xffffff),
-                        centerY: am5.p50,
-                        centerX: am5.p100,
-                        populateText: true
-                    })
-                });
-            });
-
-            series.columns.template.setAll({
-                tooltipText: "Name: {categoryY}\nDue: {valueX}"
-            });
-
-            series.data.setAll(topCustomersData);
-
-            // Make chart animate on load
-            series.appear(1000);
-            chart.appear(1000, 100);
-         });
-
-    </script>
-    
+        }
+    });
+</script>
 @endpush
