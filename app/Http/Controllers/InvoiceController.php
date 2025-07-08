@@ -392,7 +392,7 @@ class InvoiceController extends Controller
                 : 0;
 
             $monthlyRent = $agreement->monthly_rent ?? 0;
-            $totalRent = $monthlyRent * $roomCount;
+            $totalRent = $monthlyRent;
 
             // Calculate dues based on invoices earlier than the specified invoice_id
             $dues = 0;
