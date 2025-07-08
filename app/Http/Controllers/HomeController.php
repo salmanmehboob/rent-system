@@ -10,6 +10,7 @@ use App\Models\Agreement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use App\Models\Transaction;
 
 class HomeController extends Controller
 {
@@ -93,30 +94,49 @@ class HomeController extends Controller
                 ];
             });
 
-        // Additional data for report summary graph
-        $monthlyCollection = Invoice::select(
-            DB::raw('YEAR(created_at) as year'),
-            DB::raw('MONTH(created_at) as month'),
-            DB::raw('SUM(paid) as total_paid'),
-            DB::raw('SUM(remaining) as total_remaining'),
-            DB::raw('COUNT(*) as invoice_count')
-        )
-        ->whereYear('created_at', '>=', now()->subMonths(6)->year)
-        ->groupBy(DB::raw('YEAR(created_at)'), DB::raw('MONTH(created_at)'))
-        ->orderBy('year', 'asc')
-        ->orderBy('month', 'asc')
-        ->get()
-        ->map(function ($item) {
-            $monthName = date('M', mktime(0, 0, 0, $item->month, 1));
+        // Get months from January to current month of this year
+        $months = collect(range(1, now()->month))->map(function ($month) {
             return [
-                'period' => $monthName . ' ' . $item->year,
-                'paid' => (float)$item->total_paid,
-                'remaining' => (float)$item->total_remaining,
-                'total' => (float)($item->total_paid + $item->total_remaining),
-                'count' => $item->invoice_count
+                'year' => now()->year,
+                'month' => date('F', mktime(0, 0, 0, $month, 1)),
             ];
         });
 
+        // Paid per month from transactions
+        $paidPerMonth = Transaction::select('year', 'month', DB::raw('SUM(paid) as total_paid'))
+            ->whereIn(DB::raw("CONCAT(year, '-', month)"), $months->map(fn($m) => $m['year'].'-'.$m['month']))
+            ->groupBy('year', 'month')
+            ->orderBy('year')
+            ->orderByRaw("FIELD(month, '".implode("','", $months->pluck('month')->unique()->toArray())."')")
+            ->get()
+            ->keyBy(fn($row) => $row->year.'-'.$row->month);
+
+         // Pending per month from invoices
+        $pendingPerMonth = Invoice::select('year', 'month', DB::raw('SUM(remaining) as total_remaining'))
+            ->whereIn(DB::raw("CONCAT(year, '-', month)"), $months->map(fn($m) => $m['year'].'-'.$m['month']))
+            ->groupBy('year', 'month')
+            ->orderBy('year')
+            ->orderByRaw("FIELD(month, '".implode("','", $months->pluck('month')->unique()->toArray())."')")
+            ->get()
+            ->keyBy(fn($row) => $row->year.'-'.$row->month);
+
+        // Combine for dashboard
+        $monthlyCollection = $months->map(function ($m) use ($paidPerMonth, $pendingPerMonth) {
+            $key = $m['year'].'-'.$m['month'];
+            $monthName = $m['month'];
+            $year = $m['year'];
+            $paid = (float)($paidPerMonth[$key]->total_paid ?? 0);
+            $remaining = (float)($pendingPerMonth[$key]->total_remaining ?? 0);
+            return [
+                'period' => $monthName . ' ' . $year,
+                'paid' => $paid,
+                'remaining' => $remaining,
+                'total' => $paid + $remaining,
+                'count' => null // You can add invoice count if needed
+            ];
+        });
+
+        // dd($monthlyCollection);
         // Building-wise collection data
         $buildingCollection = Invoice::with('customer.agreements.roomShops.building')
             ->select(
@@ -160,80 +180,66 @@ class HomeController extends Controller
             ];
         });
 
-        // Expired Agreements Data for Charts
-        $expiredAgreementsData = Agreement::select(
-            DB::raw('YEAR(end_date) as year'),
-            DB::raw('MONTH(end_date) as month'),
-            DB::raw('COUNT(*) as expired_count')
-        )
-        ->where('end_date', '<', now()->toDateString())
-        ->whereYear('end_date', '>=', now()->subMonths(6)->year)
-        ->groupBy(DB::raw('YEAR(end_date)'), DB::raw('MONTH(end_date)'))
-        ->orderBy('year', 'asc')
-        ->orderBy('month', 'asc')
-        ->get()
-        ->map(function ($item) {
-            $monthName = date('M', mktime(0, 0, 0, $item->month, 1));
-            return [
-                'period' => $monthName . ' ' . $item->year,
-                'expired_count' => (int)$item->expired_count
-            ];
-        });
+        // dd($topCustomers);
 
-        // Expiring Agreements Data for Charts (next 3 months)
-        $expiringAgreementsData = Agreement::select(
-            DB::raw('YEAR(end_date) as year'),
-            DB::raw('MONTH(end_date) as month'),
-            DB::raw('COUNT(*) as expiring_count')
-        )
-        ->where('end_date', '>=', now()->toDateString())
-        ->where('end_date', '<=', now()->addMonths(3)->toDateString())
-        ->groupBy(DB::raw('YEAR(end_date)'), DB::raw('MONTH(end_date)'))
-        ->orderBy('year', 'asc')
-        ->orderBy('month', 'asc')
-        ->get()
-        ->map(function ($item) {
-            $monthName = date('M', mktime(0, 0, 0, $item->month, 1));
-            return [
-                'period' => $monthName . ' ' . $item->year,
-                'expiring_count' => (int)$item->expiring_count
-            ];
-        });
-
-        // Agreement Status Breakdown
+        // Agreement status breakdown for chart
         $agreementStatusData = Agreement::select('status', DB::raw('COUNT(*) as count'))
             ->groupBy('status')
             ->get()
-            ->map(function ($item) {
+            ->map(function ($row) {
                 return [
-                    'status' => ucfirst($item->status),
-                    'count' => (int)$item->count
+                    'status' => ucfirst($row->status),
+                    'count' => $row->count
                 ];
             });
 
-        // Monthly Agreement Expiry Trend (Last 6 months + Next 3 months)
-        $monthlyExpiryTrend = Agreement::select(
-            DB::raw('YEAR(end_date) as year'),
-            DB::raw('MONTH(end_date) as month'),
-            DB::raw('SUM(CASE WHEN end_date < CURDATE() THEN 1 ELSE 0 END) as expired'),
-            DB::raw('SUM(CASE WHEN end_date >= CURDATE() AND end_date <= DATE_ADD(CURDATE(), INTERVAL 3 MONTH) THEN 1 ELSE 0 END) as expiring')
-        )
-        ->whereYear('end_date', '>=', now()->subMonths(6)->year)
-        ->whereYear('end_date', '<=', now()->addMonths(3)->year)
-        ->groupBy(DB::raw('YEAR(end_date)'), DB::raw('MONTH(end_date)'))
-        ->orderBy('year', 'asc')
-        ->orderBy('month', 'asc')
-        ->get()
-        ->map(function ($item) {
-            $monthName = date('M', mktime(0, 0, 0, $item->month, 1));
+        // Monthly Expiry Trend Data (for current year, Jan to current month)
+        $expiryMonths = collect(range(1, now()->month))->map(function ($month) {
             return [
-                'period' => $monthName . ' ' . $item->year,
-                'expired' => (int)$item->expired,
-                'expiring' => (int)$item->expiring
+                'year' => now()->year,
+                'month' => $month,
+                'period' => date('M', mktime(0, 0, 0, $month, 1)) . ' ' . now()->year
+            ];
+        });
+        $monthlyExpiryTrend = $expiryMonths->map(function ($m) {
+            $expired = Agreement::whereYear('end_date', $m['year'])
+                ->whereMonth('end_date', $m['month'])
+                ->where('end_date', '<', now()->toDateString())
+                ->count();
+            $expiring = Agreement::whereYear('end_date', $m['year'])
+                ->whereMonth('end_date', $m['month'])
+                ->where('end_date', '>=', now()->toDateString())
+                ->count();
+            return [
+                'period' => $m['period'],
+                'expired' => $expired,
+                'expiring' => $expiring
             ];
         });
 
-        // dd($topCustomers);
+        // Expired Agreements Data (for current year, Jan to current month)
+        $expiredAgreementsData = $expiryMonths->map(function ($m) {
+            $expired_count = Agreement::whereYear('end_date', $m['year'])
+                ->whereMonth('end_date', $m['month'])
+                ->where('end_date', '<', now()->toDateString())
+                ->count();
+            return [
+                'period' => $m['period'],
+                'expired_count' => $expired_count
+            ];
+        });
+
+        // Expiring Agreements Data (for current year, Jan to current month)
+        $expiringAgreementsData = $expiryMonths->map(function ($m) {
+            $expiring_count = Agreement::whereYear('end_date', $m['year'])
+                ->whereMonth('end_date', $m['month'])
+                ->where('end_date', '>=', now()->toDateString())
+                ->count();
+            return [
+                'period' => $m['period'],
+                'expiring_count' => $expiring_count
+            ];
+        });
 
         return view('home', compact(
             'buildingsCount',
@@ -255,10 +261,10 @@ class HomeController extends Controller
             'monthlyCollection',
             'buildingCollection',
             'collectionTrend',
-            'expiredAgreementsData',
-            'expiringAgreementsData',
             'agreementStatusData',
-            'monthlyExpiryTrend'
+            'monthlyExpiryTrend',
+            'expiredAgreementsData',
+            'expiringAgreementsData'
         ));
     }
 }

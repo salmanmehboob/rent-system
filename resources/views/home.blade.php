@@ -548,28 +548,51 @@
             const labels = monthlyCollectionData.map(item => item.period);
             const paidData = monthlyCollectionData.map(item => item.paid);
             const remainingData = monthlyCollectionData.map(item => item.remaining);
+            const totalData = monthlyCollectionData.map(item => item.total);
 
             new Chart(monthlyCollectionCtx, {
                 type: "line",
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: "Paid Amount",
-                        data: paidData,
-                        borderColor: "rgba(75, 192, 192, 1)",
-                        backgroundColor: "rgba(75, 192, 192, 0.2)",
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }, {
-                        label: "Remaining Amount",
-                        data: remainingData,
-                        borderColor: "rgba(255, 99, 132, 1)",
-                        backgroundColor: "rgba(255, 99, 132, 0.2)",
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }]
+                    datasets: [
+                        {
+                            label: "Paid Amount",
+                            data: paidData,
+                            borderColor: "#4bc0c0",
+                            backgroundColor: "rgba(75, 192, 192, 0.15)",
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: "#4bc0c0"
+                        },
+                        {
+                            label: "Remaining Amount",
+                            data: remainingData,
+                            borderColor: "#ff6384",
+                            backgroundColor: "rgba(255, 99, 132, 0.15)",
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: "#ff6384"
+                        },
+                        {
+                            label: "Total Amount",
+                            data: totalData,
+                            borderColor: "#36a2eb",
+                            backgroundColor: "rgba(54, 162, 235, 0.10)",
+                            borderWidth: 2,
+                            fill: false,
+                            borderDash: [8, 4],
+                            tension: 0.4,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: "#36a2eb"
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
@@ -579,13 +602,11 @@
                             position: "top",
                             labels: {
                                 usePointStyle: true,
-                                font: {
-                                    size: 12
-                                }
+                                font: { size: 13 }
                             }
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
                             titleColor: '#fff',
                             bodyColor: '#fff',
                             borderColor: 'rgba(255, 255, 255, 0.2)',
@@ -593,7 +614,10 @@
                             cornerRadius: 8,
                             callbacks: {
                                 label: function(context) {
-                                    return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    label += context.raw.toLocaleString('en-US', { style: 'currency', currency: 'PKR' });
+                                    return label;
                                 }
                             }
                         }
@@ -602,24 +626,26 @@
                         y: {
                             beginAtZero: true,
                             grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
+                                color: "rgba(0, 0, 0, 0.08)",
                                 drawBorder: false
                             },
                             ticks: {
                                 callback: function(value) {
-                                    return value.toLocaleString();
-                                }
+                                    return value.toLocaleString('en-US', { style: 'currency', currency: 'PKR', maximumFractionDigits: 0 });
+                                },
+                                font: { size: 12 }
                             }
                         },
                         x: {
                             grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
+                                color: "rgba(0, 0, 0, 0.08)",
                                 drawBorder: false
-                            }
+                            },
+                            ticks: { font: { size: 12 } }
                         }
                     },
                     animation: {
-                        duration: 1000,
+                        duration: 1200,
                         easing: 'easeOutQuart'
                     },
                     interaction: {
