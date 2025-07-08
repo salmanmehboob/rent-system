@@ -12,7 +12,7 @@
       width: 58mm;
       margin: 0 auto;
       padding: 0;
-      font-size: 11px;
+      font-size: 15px;
       background: #fff;
     }
     .invoice-container {
@@ -21,16 +21,16 @@
     h2 {
       text-align: center;
       margin: 0 0 4px 0;
-      font-size: 15px;
+      font-size: 18px;
       font-weight: bold;
     }
     .address {
       text-align: center;
-      font-size: 10px;
+      font-size: 13px;
       margin: 0 0 8px;
     }
     .meta {
-      font-size: 10px;
+      font-size: 13px;
       margin-bottom: 6px;
       line-height: 1.4;
     }
@@ -41,7 +41,7 @@
     .line-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 10px;
+      font-size: 13px;
       margin-bottom: 6px;
     }
     .line-table th, .line-table td {
@@ -59,10 +59,10 @@
       text-align: center;
       margin-top: 8px;
       font-family: 'Noto Nastaliq Urdu', serif;
-      font-size: 12px;
+      font-size: 15px;
     }
     .footer {
-      font-size: 9px;
+      font-size: 12px;
       margin-top: 10px;
       text-align: left;
     }
@@ -72,9 +72,11 @@
         width: 70mm;
         margin: 5px;
         padding: 5px;
+        font-size: 15px;
       }
       .footer {
         margin-top: 6px;
+        font-size: 12px;
       }
     }
   </style>
