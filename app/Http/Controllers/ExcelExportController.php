@@ -25,7 +25,12 @@ class ExcelExportController extends Controller
                 return response()->json(['error' => 'Missing building_id'], 400);
             }
 
-            $customers = Customer::where('building_id', $request->building_id)->get();
+            $customers = Customer::where('building_id', $request->building_id)
+                ->get()
+                ->sortBy(function ($customer) {
+                    $rooms = $customer->rooms();
+                    return $rooms->isNotEmpty() ? $rooms->min('id') : PHP_INT_MAX;
+                });
 
             $selectedBuildings = Building::find($request->building_id);
 
