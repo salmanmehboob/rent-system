@@ -86,7 +86,7 @@ class InvoiceController extends Controller
 
                     $buttons .= '
                         <a href="' . route('print', $invoice->id) . '"
-                        target="_blank"
+                        target="_blank" title="Print Invoice"
                         class="btn btn-secondary shadow btn-sm sharp mx-2"
                         title="Print Invoice"><i class="fa fa-print"></i></a>
                         ';
@@ -94,7 +94,7 @@ class InvoiceController extends Controller
                     if ($invoice->status === 'Unpaid') {
                         // Add Edit button for Current invoices
                         $buttons .= '
-                       <a href="#"
+                       <a href="#" title="Edit Invoice"
                        class="btn btn-warning shadow btn-sm sharp mx-2 editInvoiceBtn"
                        title="Edit Invoice"
                        data-id="' . $invoice->id . '"
@@ -122,8 +122,8 @@ class InvoiceController extends Controller
 
                             $buttons .= '
 
-                                <a href="#"
-                                class="btn btn-primary shadow btn-sm sharp me-1 payNowBtn"
+                                <a href="#" title="Pay Now"
+                                class="btn btn-success shadow btn-sm sharp me-1 payNowBtn"
                                 data-url="' . route('invoices.paid', $invoice->id) . '"
                                 data-id="' . $invoice->id . '"
                                 data-name="' . $invoice->customer->name . '"
@@ -138,7 +138,7 @@ class InvoiceController extends Controller
                             ';
                         }
 
-                        $buttons .= '<a href="javascript:void(0)"
+                        $buttons .= '<a href="javascript:void(0)" title="Payment History"
                             data-url="' . route('invoices.transactions', $invoice->id) . '"
                             class="btn btn-primary shadow btn-sm sharp mx-2 transactionHistoryBtn"
                             data-id="' . $invoice->id . '"

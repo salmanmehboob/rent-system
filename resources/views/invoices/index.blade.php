@@ -307,7 +307,7 @@
 
                             <div class="mb-3">
                                 <label for="Paidamount" class="form-label">Payable Amount</label>
-                                <input type="number" name="paid" class="form-control" required>
+                                <input type="number" id="paid" name="paid" class="form-control" required>
                             </div>
                             <div class="mb-3">
                                 <label for="Note" class="form-label">Note</label>
@@ -578,6 +578,7 @@
             $('#modalPaid').text(paid);
             $('#modalDues').text(dues);
             $('#modalRemaining').text(remaining);
+            $('#paid').val(remaining);
 
             $('#payNowModal').modal('show');
         });
