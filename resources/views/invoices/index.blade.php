@@ -311,7 +311,7 @@
                             </div>
                             <div class="mb-3">
                                 <label for="Note" class="form-label">Note</label>
-                                <textarea name="note" id="note" class="form-control" required></textarea>
+                                <textarea name="note" id="note" class="form-control" required>Paid</textarea>
                         </div>
 
 
