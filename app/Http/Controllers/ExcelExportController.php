@@ -44,6 +44,7 @@ class ExcelExportController extends Controller
 
                 $data[] = [
                     'customer_name' => $customer->name,
+                    'mobile_no' => $customer->mobile_no,
                     'roomshop_name' => $roomNamesString,
                     'rent' => $rent,
                 ];

@@ -129,7 +129,7 @@
                                             <td>${index + 1}</td>
                                             <td>${row.customer_name}</td>
                                             <td>${row.roomshop_name}</td>
-                                            <td></td>
+                                            <td>${row.mobile_no}</td>
                                             <td>${row.rent}</td>
                                             <td></td>
                                             <td></td>
