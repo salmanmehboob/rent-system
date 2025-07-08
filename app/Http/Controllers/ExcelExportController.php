@@ -31,12 +31,21 @@ class ExcelExportController extends Controller
 
 
             foreach ($customers as $customer) {
-                $room = $customer->rooms()->first(); // rooms() is a custom method, not relation
+                $rooms = $customer->rooms(); // Should return a collection
+                $roomNames = $rooms->pluck('no')->toArray();
+                $roomNamesString = !empty($roomNames) ? implode(', ', $roomNames) : '-';
+
+                // If you want to show rent for the first active agreement of the first room (as before)
+                $rent = '-';
+                if ($rooms->isNotEmpty()) {
+                    $firstRoom = $rooms->first();
+                    $rent = $firstRoom->agreements()?->where('status', 'active')->first()?->monthly_rent ?? '-';
+                }
 
                 $data[] = [
                     'customer_name' => $customer->name,
-                    'roomshop_name' => $room?->no ?? '-',
-                    'rent' => $room?->agreements()?->where('status', 'active')->first()?->monthly_rent ?? '-',
+                    'roomshop_name' => $roomNamesString,
+                    'rent' => $rent,
                 ];
             }
 
