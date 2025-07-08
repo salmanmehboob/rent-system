@@ -517,7 +517,7 @@ class InvoiceController extends Controller
                 // Calculate rent amount
                 $roomCount = $agreement->roomShops->count();
                 $monthlyRent = $agreement->monthly_rent;
-                $rentAmount = $monthlyRent * $roomCount;
+                $rentAmount = $monthlyRent ;
 
                 // Get previous dues (remaining from last invoice)
                 $lastInvoice = Invoice::where('customer_id', $customer->id)
