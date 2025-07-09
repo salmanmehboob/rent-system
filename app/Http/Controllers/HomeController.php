@@ -74,7 +74,7 @@ class HomeController extends Controller
         }
 
         $total = Invoice::sum('total');
-        $dues = Invoice::sum('remaining');
+        $dues = Invoice::whereIn('status', ['Unpaid', 'Partially Paid'])->sum('remaining');
         $paid = Invoice::sum('paid');
         $invoices = Invoice::select('paid', 'remaining')->get();
         $roomshops = RoomShop::where('availability', 1)->count();
@@ -113,6 +113,7 @@ class HomeController extends Controller
 
          // Pending per month from invoices
         $pendingPerMonth = Invoice::select('year', 'month', DB::raw('SUM(remaining) as total_remaining'))
+            ->whereIn('status', ['Unpaid', 'Partially Paid'])
             ->whereIn(DB::raw("CONCAT(year, '-', month)"), $months->map(fn($m) => $m['year'].'-'.$m['month']))
             ->groupBy('year', 'month')
             ->orderBy('year')
@@ -142,7 +143,7 @@ class HomeController extends Controller
             ->select(
                 'customer_id',
                 DB::raw('SUM(paid) as total_paid'),
-                DB::raw('SUM(remaining) as total_remaining')
+                DB::raw("SUM(CASE WHEN status IN ('Unpaid', 'Partially Paid') THEN remaining ELSE 0 END) as total_remaining")
             )
             ->groupBy('customer_id')
             ->get()
@@ -163,8 +164,10 @@ class HomeController extends Controller
         $collectionTrend = Invoice::select(
             DB::raw('YEAR(created_at) as year'),
             DB::raw('MONTH(created_at) as month'),
+            // Sum paid for all invoices (or you can restrict to status = "Paid" if you want)
             DB::raw('SUM(paid) as collection'),
-            DB::raw('SUM(remaining) as dues')
+            // Sum remaining only for unpaid invoices
+            DB::raw("SUM(CASE WHEN status IN ('Unpaid', 'Partially Paid') THEN remaining ELSE 0 END) as dues")
         )
         ->whereYear('created_at', '>=', now()->subMonths(6)->year)
         ->groupBy(DB::raw('YEAR(created_at)'), DB::raw('MONTH(created_at)'))

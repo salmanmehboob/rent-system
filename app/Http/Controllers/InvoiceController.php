@@ -596,4 +596,61 @@ class InvoiceController extends Controller
         }
     }
 
+    /**
+     * Pay multiple invoices at once (combine payment)
+     */
+    public function payCombineInvoice(Request $request)
+    {
+        $request->validate([
+            'invoice_ids' => 'required|array',
+            'invoice_ids.*' => 'exists:invoices,id',
+        ]);
+
+        $invoiceIds = $request->invoice_ids;
+        $paidCount = 0;
+        $errors = [];
+
+        foreach ($invoiceIds as $id) {
+            $invoice = Invoice::find($id);
+            if (!$invoice) {
+                $errors[] = "Invoice ID $id not found.";
+                continue;
+            }
+            if ($invoice->status === 'Paid') {
+                $errors[] = "Invoice ID $id is already paid.";
+                continue;
+            }
+            // Mark as paid (simulate full payment)
+            $invoice->paid = $invoice->total;
+            $invoice->remaining = 0;
+            $invoice->status = 'Paid';
+            $invoice->save();
+
+            // Insert transaction record
+            $transactionData = [
+                'invoice_id' => $invoice->id,
+                'paid' => $invoice->total,
+                'year' => $invoice->year,
+                'month' => $invoice->month,
+                'remaining' => 0,
+                'note' => 'Paid (Combined)',
+            ];
+            \App\Models\Transaction::create($transactionData);
+
+            $paidCount++;
+        }
+
+        if ($paidCount > 0) {
+            return response()->json([
+                'success' => true,
+                'message' => "$paidCount invoice(s) paid successfully." . ($errors ? ' Some errors: ' . implode(' ', $errors) : ''),
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'No invoices were paid. ' . implode(' ', $errors),
+            ], 422);
+        }
+    }
+
 }

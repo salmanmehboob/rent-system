@@ -70,6 +70,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/customer-by-building', [InvoiceController::class, 'getByBuilding']);
     Route::get('/total-bills', [InvoiceController::class, 'show'])->name('bills');
     Route::post('/generate-bills', [InvoiceController::class, 'combine'])->name('combine-bills');
+    Route::post('invoices/pay-now-combine', [\App\Http\Controllers\InvoiceController::class, 'payCombineInvoice'])->name('invoices.pay-now-combine');
 
 
     // route for print invoice

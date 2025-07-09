@@ -173,14 +173,15 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <button id="payNowCombineBtn" class="btn btn-success mb-3 d-none">Pay Now Combine</button>
                     <div class="table-responsive">
                         <table class="table table-bordered" id="invoicesTable" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
-                                    <th>#</th>
+                                    <th class="no-sort"><input type="checkbox" id="checkAllInvoices"></th> <!-- Check All -->
                                     <th>Building</th>
                                     <th>Customer</th>
-                                    <th>Room/Shops</th> <!-- Added RoomShops column header -->
+                                    <th>Room/Shops</th>
                                     <th>Month</th>
                                     <th>Rent</th>
                                     <th>Dues</th>
@@ -253,6 +254,20 @@
             }
             .line-table td:last-child, .line-table th:last-child {
                 text-align: right;
+            }
+            th.no-sort.sorting, th.no-sort.sorting_asc, th.no-sort.sorting_desc {
+                pointer-events: none;
+                cursor: default;
+                background-image: none !important;
+            }
+            /* Hide DataTables sorting icons for .no-sort columns */
+            th.no-sort:after, th.no-sort:before {
+                display: none !important;
+                content: none !important;
+            }
+            th.no-sort {
+                cursor: default !important;
+                background-image: none !important;
             }
         </style>
 
@@ -535,7 +550,18 @@
                 }
             },
             columns: [
-                { data: 'invoice_id', name: 'invoice_id' },
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    className: 'no-sort', // prevent ordering arrow
+                    render: function (data, type, row) {
+                        if (row.status && row.status.indexOf('Unpaid') === -1) {
+                            return '';
+                        }
+                        return '<input type="checkbox" class="invoice-checkbox" value="' + row.invoice_id + '">';
+                    }
+                },
                 { data: 'building', name: 'building' },
                 { data: 'customer', name: 'customer' },
                 { data: 'room_shops', name: 'room_shops' },
@@ -553,6 +579,9 @@
                 { data: 'status', name: 'status' },
                 { data: 'type', name: 'type' },
                 { data: 'actions', name: 'actions', orderable: false, searchable: false },
+            ],
+            columnDefs: [
+                { targets: 0, orderable: false, searchable: false, className: 'no-sort' }
             ]
         });
 
@@ -737,5 +766,70 @@
             $('#invoicesTable').DataTable().ajax.reload();
         });
     });
+
+    // Checkbox logic and Pay Now Combine button
+    $(document).on('change', '#checkAllInvoices', function() {
+        var checked = $(this).is(':checked');
+        // Only check visible (enabled) checkboxes
+        $('.invoice-checkbox').prop('checked', checked).trigger('change');
+    });
+
+    $(document).on('change', '.invoice-checkbox', function() {
+        var total = $('.invoice-checkbox').length;
+        var checkedCount = $('.invoice-checkbox:checked').length;
+        if (checkedCount > 0) {
+            $('#payNowCombineBtn').removeClass('d-none');
+        } else {
+            $('#payNowCombineBtn').addClass('d-none');
+        }
+        // If all visible checkboxes are checked, check the header; else, uncheck
+        $('#checkAllInvoices').prop('checked', total > 0 && total === checkedCount);
+    });
+
+    $('#payNowCombineBtn').on('click', function() {
+        var selectedIds = $('.invoice-checkbox:checked').map(function() { return $(this).val(); }).get();
+        if (selectedIds.length === 0) return;
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You are about to pay ' + selectedIds.length + ' invoices together.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Pay Now!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('invoices.pay-now-combine') }}",
+                    method: 'POST',
+                    data: {
+                        _token: $('meta[name="csrf-token"]').attr('content'),
+                        invoice_ids: selectedIds
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success(response.message, "Success!", {
+                                timeOut: 2000,
+                                closeButton: true,
+                                progressBar: true,
+                                positionClass: "toast-top-right",
+                                preventDuplicates: true,
+                            });
+                            // Refresh the table
+                            refreshInvoicesTable();
+                            // Close modal if it was open
+                            $('#payNowModal').modal('hide');
+                        } else {
+                            toastr.error(response.message || "Operation failed", "Error!");
+                        }
+                    },
+                    error: function(err) {
+                        let errorMessage = err.responseJSON?.message || 'Failed to pay invoices';
+                        toastr.error(errorMessage, "Error!");
+                    }
+                });
+            }
+        });
+    });
+
 </script>
 @endpush
