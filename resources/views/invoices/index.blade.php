@@ -133,7 +133,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="m-3">
                             <select id="filterBuilding" class="form-control select2" style="min-width: 180px;">
-                                <option value="">All</option>
+                                <option value="">Select Buildings</option>
                                 @foreach ($buildings as $building)
                                     <option value="{{ $building->id }}">{{ $building->name }}</option>
                                 @endforeach
@@ -141,13 +141,13 @@
                         </div>
                         <div class="m-3">
                             <select id="filterCustomer" class="form-control select2" style="min-width: 180px;">
-                                <option value="">All</option>
+                                <option value="">Select Customers</option>
                             </select>
                         </div>
 
                     <div class="m-3">
                         <select id="filterStatus" class="form-control select2" style="min-width: 180px;">
-                            <option value="">All</option>
+                            <option value="">Select Status</option>
                             <option value="Paid">Paid</option>
                             <option value="Unpaid">Unpaid</option>
                             <option value="Partially Paid">Partially Paid</option>
@@ -156,7 +156,7 @@
                     </div>
                     <div class="m-3">
                         <select id="filterMonth" class="form-control select2" style="min-width: 180px;">
-                            <option value="">All Months</option>
+                            <option value="">Select Months</option>
                             @foreach ($months as $month)
                                 <option value="{{ $month }}">{{ $month }}</option>
                             @endforeach
@@ -164,7 +164,7 @@
                     </div>
                     <div class="m-3">
                         <select id="filterYear" class="form-control select2" style="min-width: 180px;">
-                            <option value="">All Years</option>
+                            <option value="">Select Years</option>
                             @for ($year=$currentYear; $year>= $startYear; $year--)
                                 <option value="{{ $year }}">{{ $year }}</option>
                             @endfor
@@ -180,6 +180,7 @@
                                     <th>#</th>
                                     <th>Building</th>
                                     <th>Customer</th>
+                                    <th>Room/Shops</th> <!-- Added RoomShops column header -->
                                     <th>Month</th>
                                     <th>Rent</th>
                                     <th>Dues</th>
@@ -537,6 +538,7 @@
                 { data: 'invoice_id', name: 'invoice_id' },
                 { data: 'building', name: 'building' },
                 { data: 'customer', name: 'customer' },
+                { data: 'room_shops', name: 'room_shops' },
                 {
                     data: null,
                     name: 'month_year',

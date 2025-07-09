@@ -24,7 +24,7 @@ class InvoiceController extends Controller
                 'customer' => function ($query) {
                     $query->withTrashed();
                 },
-                'agreement',
+                'agreement.roomShops', // eager load roomShops via agreement
                 'transactions'
             ])
                 ->when($request->building_id, function ($query) use ($request) {
@@ -52,6 +52,13 @@ class InvoiceController extends Controller
                 })
                 ->addColumn('customer', function ($invoice) {
                     return $invoice->customer->name ?? 'N/A';
+                })
+                ->addColumn('room_shops', function ($invoice) {
+                     // Get roomshops from latest agreement (already eager loaded)
+                    if ($invoice->agreement && $invoice->agreement->roomShops->count()) {
+                        return $invoice->agreement->roomShops->pluck('no')->implode(', ');
+                    }
+                    return 'N/A';
                 })
                 ->addColumn('status', function ($invoice) {
                     if ($invoice->status === 'Paid') {
@@ -286,7 +293,9 @@ class InvoiceController extends Controller
             $newInvoiceDate = Carbon::createFromFormat('d-F-Y H:i:s', '01-' . $validatedData['month'] . '-' . $validatedData['year'] . ' 00:00:00');
             $existingInvoices = Invoice::where('customer_id', $validatedData['customer_id'])->get();
 
-
+            $validatedData['remaining'] = $validatedData['total']  ;
+            $validatedData['due'] = $validatedData['total']  ;
+//            dd($validatedData);
             $invoice->update($validatedData);
 
             DB::commit();
@@ -396,25 +405,17 @@ class InvoiceController extends Controller
 
             // Calculate dues based on invoices earlier than the specified invoice_id
             $dues = 0;
+            // this is on edit
             if ($invoice_id) {
-                // Get the target invoice to understand its date
+                 // Get the target invoice to understand its date
                 $targetInvoice = Invoice::find($invoice_id);
-                if ($targetInvoice) {
-                    // Get invoices for this customer that are earlier than the target invoice
-                    $earlierInvoices = $customer->invoices()
-                        ->where('id', '<', $invoice_id)
-                        ->orderBy('id', 'desc')
-                        ->get();
-
-                    // Calculate total dues from earlier invoices
-                    foreach ($earlierInvoices as $invoice) {
-                        $dues += $invoice->remaining;
-                    }
+                 if ($targetInvoice) {
+                    $dues = $targetInvoice->dues;
                 }
             } else {
-                // If no invoice_id provided, get the latest invoice dues
+                 // If no invoice_id provided, get the latest invoice dues
                 $latestInvoice = $customer->invoices()->latest()->first();
-                $dues = $latestInvoice?->dues ?? 0;
+                $dues = $latestInvoice?->remaining ?? 0;
             }
 
             return [
