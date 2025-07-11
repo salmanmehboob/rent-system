@@ -73,26 +73,8 @@ class HomeController extends Controller
                 ->count();
         }
 
-        $total = Invoice::sum('total');
-        $dues = Invoice::whereIn('status', ['Unpaid', 'Partially Paid'])->sum('remaining');
-        $paid = Invoice::sum('paid');
         $invoices = Invoice::select('paid', 'remaining')->get();
         $roomshops = RoomShop::where('availability', 1)->count();
-
-        $topCustomers = Invoice::with('customer:id,name')
-            ->select('customer_id', DB::raw('SUM(remaining) as total_due'))
-            ->where('type', 'Current')
-            ->groupBy('customer_id')
-            ->having('total_due', '>', 0)
-            ->orderByDesc('total_due')
-            ->limit(10)
-            ->get()
-            ->map(function ($invoice) {
-                return [
-                    'customer_name' => $invoice->customer->name ?? 'Unknown',
-                    'total_due' => (float)$invoice->total_due
-                ];
-            });
 
         // Get months from January to current month of this year
         $months = collect(range(1, now()->month))->map(function ($month) {
@@ -160,28 +142,35 @@ class HomeController extends Controller
             })
             ->sortByDesc('total');
 
-        // Collection vs Dues comparison for the last 6 months
-        $collectionTrend = Invoice::select(
+        // Collection vs Dues comparison for the current year, Jan to current month
+        $currentYear = now()->year;
+        $allMonths = range(1, now()->month);
+        $collectionTrendRaw = Invoice::select(
             DB::raw('YEAR(created_at) as year'),
             DB::raw('MONTH(created_at) as month'),
-            // Sum paid for all invoices (or you can restrict to status = "Paid" if you want)
             DB::raw('SUM(paid) as collection'),
-            // Sum remaining only for unpaid invoices
             DB::raw("SUM(CASE WHEN status IN ('Unpaid', 'Partially Paid') THEN remaining ELSE 0 END) as dues")
         )
-        ->whereYear('created_at', '>=', now()->subMonths(6)->year)
+        ->whereYear('created_at', $currentYear)
         ->groupBy(DB::raw('YEAR(created_at)'), DB::raw('MONTH(created_at)'))
-        ->orderBy('year', 'asc')
         ->orderBy('month', 'asc')
         ->get()
-        ->map(function ($item) {
-            $monthName = date('M', mktime(0, 0, 0, $item->month, 1));
-            return [
-                'period' => $monthName . ' ' . $item->year,
-                'collection' => (float)$item->collection,
-                'dues' => (float)$item->dues
-            ];
+        ->keyBy(function($item) {
+            return $item->month;
         });
+
+        $collectionTrend = [];
+        foreach ($allMonths as $month) {
+            $monthName = date('M', mktime(0, 0, 0, $month, 1));
+            $item = $collectionTrendRaw[$month] ?? null;
+            $collection = $item ? (float)$item->collection : 0;
+            $dues = $item ? (float)$item->dues : 0;
+            $collectionTrend[] = [
+                'period' => $monthName . ' ' . $currentYear,
+                'collection' => $collection,
+                'dues' => $dues
+            ];
+        }
 
         // dd($topCustomers);
 
@@ -253,21 +242,68 @@ class HomeController extends Controller
             'latestMonth',
             'latestYear',
             'canPrintInvoices',
-            'total',
-            'dues',
-            'paid',
             'invoices',
             'roomshops',
-            'topCustomers',
-            'expiredAgreements',
-            'expiringThisMonth',
             'monthlyCollection',
             'buildingCollection',
             'collectionTrend',
             'agreementStatusData',
             'monthlyExpiryTrend',
+            'expiredAgreements',
+            'expiringThisMonth',
             'expiredAgreementsData',
             'expiringAgreementsData'
         ));
+    }
+
+    /**
+     * AJAX endpoint for invoice chart data by month/year
+     */
+    public function invoiceChartData(Request $request)
+    {
+        $month = $request->get('month', now()->month);
+        $year = $request->get('year', now()->year);
+
+        $paid = Invoice::where('month', $month)
+            ->where('year', $year)
+            ->sum('paid');
+        $dues = Invoice::where('month', $month)
+            ->where('year', $year)
+            ->whereIn('status', ['Unpaid', 'Partially Paid'])
+            ->sum('remaining');
+
+        return response()->json([
+            'paid' => (float) $paid,
+            'dues' => (float) $dues,
+        ]);
+    }
+
+    /**
+     * AJAX endpoint for top customers chart data by month/year
+     */
+    public function topCustomersChartData(Request $request)
+    {
+    
+        $month = $request->get('month', date('F'));
+        $year = $request->get('year', now()->year);
+
+        $topCustomers = Invoice::with('customer:id,name')
+            ->select('customer_id', DB::raw('SUM(remaining) as total_due'))
+            // ->where('type', 'Current')
+            ->where('month', $month)
+            ->where('year', $year)
+            ->groupBy('customer_id')
+            ->having('total_due', '>', 0)
+            ->orderByDesc('total_due')
+            ->limit(10)
+            ->get()
+            ->map(function ($invoice) {
+                return [
+                    'customer_name' => $invoice->customer->name ?? 'Unknown',
+                    'total_due' => (float)$invoice->total_due
+                ];
+            });
+
+        return response()->json($topCustomers);
     }
 }

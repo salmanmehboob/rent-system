@@ -166,21 +166,80 @@
     <div class="row mb-3">
         <div class="col-md-6">
             <div class="card shadow">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Total Invoices Amount: {{ number_format($total) }}</h6>
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Total Invoices Amount: <span id="invoiceTotalAmount">0</span></h6>
+                    <div class="d-flex align-items-center">
+                        <select id="invoiceMonth" class="form-control form-control-sm mr-2" style="width:auto;">
+                            @php
+                                $months = [
+                                    1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April', 5 => 'May', 6 => 'June',
+                                    7 => 'July', 8 => 'August', 9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+                                ];
+                                // If $latestMonth is set and numeric, convert to name. If it's a string, use as is. Otherwise, use current month name.
+                                if (isset($latestMonth)) {
+                                    $selectedMonth = is_numeric($latestMonth) ? $months[$latestMonth] : $latestMonth;
+                                } else {
+                                    $selectedMonth = date('F');
+                                }
+                            @endphp
+                            @foreach($months as $num => $name)
+                                <option value="{{ $name }}" @if($name == $selectedMonth) selected @endif>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                        <select id="invoiceYear" class="form-control form-control-sm" style="width:auto;">
+                            @php
+                                $currentYear = now()->year;
+                                $startYear = $currentYear - 5;
+                                $endYear = $currentYear + 1;
+                                $selectedYear = $latestYear ?? $currentYear;
+                            @endphp
+                            @for($y = $endYear; $y >= $startYear; $y--)
+                                <option value="{{ $y }}" @if($y == $selectedYear) selected @endif>{{ $y }}</option>
+                            @endfor
+                        </select>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="invoiceChart" width="400" height="200"></canvas>
+                    <canvas id="invoiceChart" width="400" height="400"></canvas>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
             <div class="card shadow">
-                <div class="card-header">
+                <div class="card-header d-flex align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">Top 10 Customers with Highest Dues</h6>
+                    <div class="d-flex align-items-center">
+                        <select id="topCustomersMonth" class="form-control form-control-sm mr-2" style="width:auto;">
+                            @php
+                                $months = [
+                                    1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April', 5 => 'May', 6 => 'June',
+                                    7 => 'July', 8 => 'August', 9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+                                ];
+                                if (isset($latestMonth)) {
+                                    $selectedTopMonth = is_numeric($latestMonth) ? $months[$latestMonth] : $latestMonth;
+                                } else {
+                                    $selectedTopMonth = date('F');
+                                }
+                            @endphp
+                            @foreach($months as $num => $name)
+                                <option value="{{ $name }}" @if($name == $selectedTopMonth) selected @endif>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                        <select id="topCustomersYear" class="form-control form-control-sm" style="width:auto;">
+                            @php
+                                $currentYear = now()->year;
+                                $startYear = $currentYear - 5;
+                                $endYear = $currentYear + 1;
+                                $selectedTopYear = $latestYear ?? $currentYear;
+                            @endphp
+                            @for($y = $endYear; $y >= $startYear; $y--)
+                                <option value="{{ $y }}" @if($y == $selectedTopYear) selected @endif>{{ $y }}</option>
+                            @endfor
+                        </select>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="topCustomersChart" width="400" height="200"></canvas>
+                    <canvas id="topCustomersChart" width="400" height="400"></canvas>
                 </div>
             </div>
         </div>
@@ -202,7 +261,7 @@
         <div class="col-md-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-light">
-                    <h6 class="m-0 font-weight-bold text-primary">Collection vs Dues (Last 6 Months)</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Collection vs Dues ({{date('Y')}})</h6>
                 </div>
                 <div class="card-body">
                     <canvas id="collectionTrendChart" width="400" height="200"></canvas>
@@ -271,83 +330,6 @@
         </div>
     </div>
 
-    <!-- Expired Agreements Row -->
-    <div class="row mb-3">
-        <div class="col-md-12">
-            <div class="card shadow">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Expired Agreements</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Customer Name</th>
-                                    <th>Start Date</th>
-                                    <th>End Date</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($expiredAgreements as $agreement)
-                                    <tr>
-                                        <td>{{ $agreement->customer->name }}</td>
-                                        <td>{{ $agreement->start_date }}</td>
-                                        <td>{{ $agreement->end_date }}</td>
-                                        @if($agreement->status === 'inactive')
-                                            <td><span class="badge badge-danger">Expired</span></td>
-                                        @else
-                                            <td>{{ $agreement->status }}</td>
-                                        @endif
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Expiring Agreements Row -->
-    <div class="row mb-3">
-        <div class="col-md-12">
-            <div class="card shadow">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Expiring Agreements</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Customer Name</th>
-                                    <th>Start Date</th>
-                                    <th>End Date</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($expiringThisMonth as $agreement)
-                                    <tr>
-                                        <td>{{ $agreement->customer->name }}</td>
-                                        <td>{{ $agreement->start_date }}</td>
-                                        <td>{{ $agreement->end_date }}</td>
-                                        @if($agreement->status === 'active')
-                                            <td><span class="badge badge-success">Active</span></td>
-                                        @else
-                                            <td>{{ $agreement->status }}</td>
-                                        @endif
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @push('js')
@@ -380,759 +362,813 @@
         });
     });
 
-    // Initialize Charts when DOM is ready
-    document.addEventListener("DOMContentLoaded", function () {
-        // Check if Chart.js is loaded
-        if (typeof Chart === 'undefined') {
-            console.error('Chart.js is not loaded');
-            return;
+    // --- Invoice Chart AJAX Update ---
+    let invoiceChartInstance = null;
+    function updateInvoiceChart(paid, dues) {
+        if (invoiceChartInstance) {
+            invoiceChartInstance.data.datasets[0].data = [paid, dues];
+            invoiceChartInstance.update();
         }
+    }
 
-        // Chart 1: Invoice Doughnut Chart with Chart.js 4.5 features
-        const invoiceCtx = document.getElementById("invoiceChart");
-        if (invoiceCtx) {
-            new Chart(invoiceCtx, {
-                type: "doughnut",
-                data: {
-                    labels: ["Paid", "Dues"],
-                    datasets: [{
-                        data: [{{ (float) $paid }}, {{ (float) $dues }}],
-                        backgroundColor: [
-                            "rgba(75, 192, 192, 0.8)",
-                            "rgba(255, 99, 132, 0.8)"
-                        ],
-                        borderColor: [
-                            "rgba(75, 192, 192, 1)",
-                            "rgba(255, 99, 132, 1)"
-                        ],
-                        borderWidth: 2,
-                        hoverBorderWidth: 3,
-                        cutout: '60%'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: "bottom",
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((context.raw / total) * 100).toFixed(1);
-                                    return `${context.label}: ${context.raw.toLocaleString()} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    },
-                    animation: {
-                        animateRotate: true,
-                        animateScale: true,
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-        }
+    function fetchInvoiceChartData(month, year) {
+        $.ajax({
+            url: "{{ route('home.invoiceChartData') }}",
+            method: 'GET',
+            data: { month: month, year: year },
+            success: function(res) {
+                updateInvoiceChart(res.paid, res.dues);
+                $('#invoiceTotalAmount').text(Number(res.paid + res.dues).toLocaleString());
+            },
+            error: function() {
+                alert('Failed to fetch invoice chart data.');
+            }
+        });
+    }
 
-        // Chart 2: Top Customers Horizontal Bar Chart with Chart.js 4.5 features
-        const topCustomers = @json($topCustomers);
-        const labels = topCustomers.map(item => item.customer_name);
-        const data = topCustomers.map(item => item.total_due);
-
-        const topCustomersCtx = document.getElementById("topCustomersChart");
-        if (topCustomersCtx) {
-            new Chart(topCustomersCtx, {
-                type: "bar",
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: "Total Due",
-                        data: data,
-                        backgroundColor: "rgba(54, 162, 235, 0.8)",
-                        borderColor: "rgba(54, 162, 235, 1)",
-                        borderWidth: 1,
-                        hoverBackgroundColor: "rgba(54, 162, 235, 1)",
-                        borderRadius: 4,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    indexAxis: "y", // horizontal bar
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            enabled: true,
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function (context) {
-                                    return `${context.label}: ${context.raw.toLocaleString()}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return value.toLocaleString();
-                                },
-                                font: {
-                                    size: 11
-                                }
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            },
-                            ticks: {
-                                autoSkip: false,
-                                maxRotation: 0,
-                                font: {
-                                    size: 11
-                                }
-                            }
-                        }
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-        }
-
-        // Chart 3: Monthly Collection Trend Chart
-        const monthlyCollectionData = @json($monthlyCollection);
-        const monthlyCollectionCtx = document.getElementById("monthlyCollectionChart");
-        if (monthlyCollectionCtx && monthlyCollectionData.length > 0) {
-            const labels = monthlyCollectionData.map(item => item.period);
-            const paidData = monthlyCollectionData.map(item => item.paid);
-            const remainingData = monthlyCollectionData.map(item => item.remaining);
-            const totalData = monthlyCollectionData.map(item => item.total);
-
-            new Chart(monthlyCollectionCtx, {
-                type: "line",
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: "Paid Amount",
-                            data: paidData,
-                            borderColor: "#4bc0c0",
-                            backgroundColor: "rgba(75, 192, 192, 0.15)",
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            pointBackgroundColor: "#4bc0c0"
-                        },
-                        {
-                            label: "Remaining Amount",
-                            data: remainingData,
-                            borderColor: "#ff6384",
-                            backgroundColor: "rgba(255, 99, 132, 0.15)",
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            pointBackgroundColor: "#ff6384"
-                        },
-                        {
-                            label: "Total Amount",
-                            data: totalData,
-                            borderColor: "#36a2eb",
-                            backgroundColor: "rgba(54, 162, 235, 0.10)",
-                            borderWidth: 2,
-                            fill: false,
-                            borderDash: [8, 4],
-                            tension: 0.4,
-                            pointRadius: 3,
-                            pointHoverRadius: 5,
-                            pointBackgroundColor: "#36a2eb"
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: "top",
-                            labels: {
-                                usePointStyle: true,
-                                font: { size: 13 }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    label += context.raw.toLocaleString('en-US', { style: 'currency', currency: 'PKR' });
-                                    return label;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.08)",
-                                drawBorder: false
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return value.toLocaleString('en-US', { style: 'currency', currency: 'PKR', maximumFractionDigits: 0 });
-                                },
-                                font: { size: 12 }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.08)",
-                                drawBorder: false
-                            },
-                            ticks: { font: { size: 12 } }
-                        }
-                    },
-                    animation: {
-                        duration: 1200,
-                        easing: 'easeOutQuart'
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-        }
-
-        // Chart 4: Collection vs Dues Trend Chart
-        const collectionTrendData = @json($collectionTrend);
-        const collectionTrendCtx = document.getElementById("collectionTrendChart");
-        if (collectionTrendCtx && collectionTrendData.length > 0) {
-            const trendLabels = collectionTrendData.map(item => item.period);
-            const collectionData = collectionTrendData.map(item => item.collection);
-            const duesData = collectionTrendData.map(item => item.dues);
-
-            new Chart(collectionTrendCtx, {
-                type: "bar",
-                data: {
-                    labels: trendLabels,
-                    datasets: [{
-                        label: "Collection",
-                        data: collectionData,
-                        backgroundColor: "rgba(75, 192, 192, 0.8)",
-                        borderColor: "rgba(75, 192, 192, 1)",
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }, {
-                        label: "Dues",
-                        data: duesData,
-                        backgroundColor: "rgba(255, 99, 132, 0.8)",
-                        borderColor: "rgba(255, 99, 132, 1)",
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: "top",
-                            labels: {
-                                usePointStyle: true,
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return value.toLocaleString();
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            }
-                        }
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-        }
-
-        // Chart 5: Building-wise Collection Chart
-        const buildingCollectionData = @json($buildingCollection);
-        const buildingCollectionCtx = document.getElementById("buildingCollectionChart");
-        if (buildingCollectionCtx && Object.keys(buildingCollectionData).length > 0) {
-            const buildingLabels = Object.keys(buildingCollectionData);
-            const buildingPaidData = Object.values(buildingCollectionData).map(item => item.total_paid);
-            const buildingRemainingData = Object.values(buildingCollectionData).map(item => item.total_remaining);
-
-            new Chart(buildingCollectionCtx, {
-                type: "bar",
-                data: {
-                    labels: buildingLabels,
-                    datasets: [{
-                        label: "Total Paid",
-                        data: buildingPaidData,
-                        backgroundColor: "rgba(75, 192, 192, 0.8)",
-                        borderColor: "rgba(75, 192, 192, 1)",
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }, {
-                        label: "Total Remaining",
-                        data: buildingRemainingData,
-                        backgroundColor: "rgba(255, 99, 132, 0.8)",
-                        borderColor: "rgba(255, 99, 132, 1)",
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: "top",
-                            labels: {
-                                usePointStyle: true,
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return value.toLocaleString();
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            },
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 0
-                            }
-                        }
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-        }
-
-        // Chart 6: Agreement Status Breakdown Chart
-        const agreementStatusData = @json($agreementStatusData);
-        const agreementStatusCtx = document.getElementById("agreementStatusChart");
-        if (agreementStatusCtx && agreementStatusData.length > 0) {
-            const statusLabels = agreementStatusData.map(item => item.status);
-            const statusCounts = agreementStatusData.map(item => item.count);
-            const colors = [
-                'rgba(75, 192, 192, 0.8)',
-                'rgba(255, 99, 132, 0.8)',
-                'rgba(255, 205, 86, 0.8)',
-                'rgba(54, 162, 235, 0.8)',
-                'rgba(153, 102, 255, 0.8)'
-            ];
-
-            new Chart(agreementStatusCtx, {
-                type: "doughnut",
-                data: {
-                    labels: statusLabels,
-                    datasets: [{
-                        data: statusCounts,
-                        backgroundColor: colors.slice(0, statusLabels.length),
-                        borderColor: colors.slice(0, statusLabels.length).map(color => color.replace('0.8', '1')),
-                        borderWidth: 2,
-                        hoverBorderWidth: 3,
-                        cutout: '60%'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: "bottom",
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((context.raw / total) * 100).toFixed(1);
-                                    return `${context.label}: ${context.raw} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    },
-                    animation: {
-                        animateRotate: true,
-                        animateScale: true,
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-        }
-
-        // Chart 7: Monthly Expiry Trend Chart
-        const monthlyExpiryTrendData = @json($monthlyExpiryTrend);
-        const monthlyExpiryCtx = document.getElementById("monthlyExpiryChart");
-        if (monthlyExpiryCtx && monthlyExpiryTrendData.length > 0) {
-            const expiryLabels = monthlyExpiryTrendData.map(item => item.period);
-            const expiredData = monthlyExpiryTrendData.map(item => item.expired);
-            const expiringData = monthlyExpiryTrendData.map(item => item.expiring);
-
-            new Chart(monthlyExpiryCtx, {
-                type: "line",
-                data: {
-                    labels: expiryLabels,
-                    datasets: [{
-                        label: "Expired",
-                        data: expiredData,
-                        borderColor: "rgba(255, 99, 132, 1)",
-                        backgroundColor: "rgba(255, 99, 132, 0.2)",
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }, {
-                        label: "Expiring",
-                        data: expiringData,
-                        borderColor: "rgba(255, 205, 86, 1)",
-                        backgroundColor: "rgba(255, 205, 86, 0.2)",
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: "top",
-                            labels: {
-                                usePointStyle: true,
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${context.raw} agreements`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            },
-                            ticks: {
-                                stepSize: 1
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            }
-                        }
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-        }
-
-        // Chart 8: Expired Agreements Trend Chart
-        const expiredAgreementsData = @json($expiredAgreementsData);
-        const expiredAgreementsCtx = document.getElementById("expiredAgreementsChart");
-        if (expiredAgreementsCtx && expiredAgreementsData.length > 0) {
-            const expiredLabels = expiredAgreementsData.map(item => item.period);
-            const expiredCounts = expiredAgreementsData.map(item => item.expired_count);
-
-            new Chart(expiredAgreementsCtx, {
-                type: "bar",
-                data: {
-                    labels: expiredLabels,
-                    datasets: [{
-                        label: "Expired Agreements",
-                        data: expiredCounts,
-                        backgroundColor: "rgba(255, 99, 132, 0.8)",
-                        borderColor: "rgba(255, 99, 132, 1)",
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.raw} expired agreements`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            },
-                            ticks: {
-                                stepSize: 1
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            }
-                        }
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-        }
-
-        // Chart 9: Expiring Agreements Chart
-        const expiringAgreementsData = @json($expiringAgreementsData);
-        const expiringAgreementsCtx = document.getElementById("expiringAgreementsChart");
-        if (expiringAgreementsCtx && expiringAgreementsData.length > 0) {
-            const expiringLabels = expiringAgreementsData.map(item => item.period);
-            const expiringCounts = expiringAgreementsData.map(item => item.expiring_count);
-
-            new Chart(expiringAgreementsCtx, {
-                type: "bar",
-                data: {
-                    labels: expiringLabels,
-                    datasets: [{
-                        label: "Expiring Agreements",
-                        data: expiringCounts,
-                        backgroundColor: "rgba(255, 205, 86, 0.8)",
-                        borderColor: "rgba(255, 205, 86, 1)",
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.raw} expiring agreements`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            },
-                            ticks: {
-                                stepSize: 1
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: "rgba(0, 0, 0, 0.1)",
-                                drawBorder: false
-                            }
-                        }
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-        }
+    $(function() {
+        const month = $('#invoiceMonth').val();
+        const year = $('#invoiceYear').val();
+        fetchInvoiceChartData(month, year);
     });
+
+    // Chart 1: Invoice Doughnut Chart with Chart.js 4.5 features
+    const invoiceCtx = document.getElementById("invoiceChart");
+    if (invoiceCtx) {
+        invoiceChartInstance = new Chart(invoiceCtx, {
+            type: "doughnut",
+            data: {
+                labels: ["Paid", "Dues"],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: [
+                        "rgba(75, 192, 192, 0.8)",
+                        "rgba(255, 99, 132, 0.8)"
+                    ],
+                    borderColor: [
+                        "rgba(75, 192, 192, 1)",
+                        "rgba(255, 99, 132, 1)"
+                    ],
+                    borderWidth: 2,
+                    hoverBorderWidth: 3,
+                    cutout: '60%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.raw / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.raw.toLocaleString()} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    // JS: Top Customers Chart AJAX logic
+    let topCustomersChartInstance = null;
+    function updateTopCustomersChart(labels, data) {
+        if (topCustomersChartInstance) {
+            topCustomersChartInstance.data.labels = labels;
+            topCustomersChartInstance.data.datasets[0].data = data;
+            topCustomersChartInstance.update();
+        }
+    }
+    function fetchTopCustomersChartData(month, year) {
+        $.ajax({
+            url: "{{ route('home.topCustomersChartData') }}",
+            method: 'GET',
+            data: { month: month, year: year },
+            success: function(res) {
+                const labels = res.map(item => item.customer_name);
+                const data = res.map(item => item.total_due);
+                updateTopCustomersChart(labels, data);
+            },
+            error: function() {
+                alert('Failed to fetch top customers chart data.');
+            }
+        });
+    }
+    $('#topCustomersMonth, #topCustomersYear').on('change', function() {
+        const month = $('#topCustomersMonth').val();
+        const year = $('#topCustomersYear').val();
+        fetchTopCustomersChartData(month, year);
+    });
+    const topCustomersCtx = document.getElementById("topCustomersChart");
+    if (topCustomersCtx) {
+        topCustomersChartInstance = new Chart(topCustomersCtx, {
+            type: "bar",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "Total Due",
+                    data: [],
+                    backgroundColor: "rgba(54, 162, 235, 0.8)",
+                    borderColor: "rgba(54, 162, 235, 1)",
+                    borderWidth: 1,
+                    hoverBackgroundColor: "rgba(54, 162, 235, 1)",
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: "y",
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function (context) {
+                                return `${context.label}: ${context.raw.toLocaleString()}`;
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: true, // <--- this is the key change
+                    mode: 'nearest'  // <--- this is the key change
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            },
+                            font: { size: 11 }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        },
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 0,
+                            font: { size: 11 },
+                            callback: function(value, index, ticks) {
+                                const customerName = this.getLabelForValue(value);
+                                const totalDue = this.chart.data.datasets[0].data[index];
+                                return `${customerName} (${Number(totalDue).toLocaleString()})`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+    // Initial fetch for top customers chart
+    document.addEventListener("DOMContentLoaded", function () {
+        const month = $('#topCustomersMonth').val();
+        const year = $('#topCustomersYear').val();
+        fetchTopCustomersChartData(month, year);
+    });
+
+    // Chart 3: Monthly Collection Trend Chart
+    const monthlyCollectionData = @json($monthlyCollection);
+    const monthlyCollectionCtx = document.getElementById("monthlyCollectionChart");
+    if (monthlyCollectionCtx && monthlyCollectionData.length > 0) {
+        const labels = monthlyCollectionData.map(item => item.period);
+        const paidData = monthlyCollectionData.map(item => item.paid);
+        const remainingData = monthlyCollectionData.map(item => item.remaining);
+        const totalData = monthlyCollectionData.map(item => item.total);
+
+        new Chart(monthlyCollectionCtx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Paid Amount",
+                        data: paidData,
+                        borderColor: "#4bc0c0",
+                        backgroundColor: "rgba(75, 192, 192, 0.15)",
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: "#4bc0c0"
+                    },
+                    {
+                        label: "Remaining Amount",
+                        data: remainingData,
+                        borderColor: "#ff6384",
+                        backgroundColor: "rgba(255, 99, 132, 0.15)",
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: "#ff6384"
+                    },
+                    {
+                        label: "Total Amount",
+                        data: totalData,
+                        borderColor: "#36a2eb",
+                        backgroundColor: "rgba(54, 162, 235, 0.10)",
+                        borderWidth: 2,
+                        fill: false,
+                        borderDash: [8, 4],
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: "#36a2eb"
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "top",
+                        labels: {
+                            usePointStyle: true,
+                            font: { size: 13 }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                label += context.raw.toLocaleString('en-US', { style: 'currency', currency: 'PKR' });
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.08)",
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('en-US', { style: 'currency', currency: 'PKR', maximumFractionDigits: 0 });
+                            },
+                            font: { size: 12 }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.08)",
+                            drawBorder: false
+                        },
+                        ticks: { font: { size: 12 } }
+                    }
+                },
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    // Chart 4: Collection vs Dues Trend Chart
+    const collectionTrendData = @json($collectionTrend);
+    const collectionTrendCtx = document.getElementById("collectionTrendChart");
+    if (collectionTrendCtx && collectionTrendData.length > 0) {
+        const trendLabels = collectionTrendData.map(item => item.period);
+        const collectionData = collectionTrendData.map(item => item.collection);
+        const duesData = collectionTrendData.map(item => item.dues);
+
+        new Chart(collectionTrendCtx, {
+            type: "bar",
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: "Collection",
+                    data: collectionData,
+                    backgroundColor: "rgba(75, 192, 192, 0.8)",
+                    borderColor: "rgba(75, 192, 192, 1)",
+                    borderWidth: 1,
+                    borderRadius: 4
+                }, {
+                    label: "Dues",
+                    data: duesData,
+                    backgroundColor: "rgba(255, 99, 132, 0.8)",
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "top",
+                        labels: {
+                            usePointStyle: true,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    // Chart 5: Building-wise Collection Chart
+    const buildingCollectionData = @json($buildingCollection);
+    const buildingCollectionCtx = document.getElementById("buildingCollectionChart");
+    if (buildingCollectionCtx && Object.keys(buildingCollectionData).length > 0) {
+        const buildingLabels = Object.keys(buildingCollectionData);
+        const buildingPaidData = Object.values(buildingCollectionData).map(item => item.total_paid);
+        const buildingRemainingData = Object.values(buildingCollectionData).map(item => item.total_remaining);
+
+        new Chart(buildingCollectionCtx, {
+            type: "bar",
+            data: {
+                labels: buildingLabels,
+                datasets: [{
+                    label: "Total Paid",
+                    data: buildingPaidData,
+                    backgroundColor: "rgba(75, 192, 192, 0.8)",
+                    borderColor: "rgba(75, 192, 192, 1)",
+                    borderWidth: 1,
+                    borderRadius: 4
+                }, {
+                    label: "Total Remaining",
+                    data: buildingRemainingData,
+                    backgroundColor: "rgba(255, 99, 132, 0.8)",
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "top",
+                        labels: {
+                            usePointStyle: true,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    // Chart 6: Agreement Status Breakdown Chart
+    const agreementStatusData = @json($agreementStatusData);
+    const agreementStatusCtx = document.getElementById("agreementStatusChart");
+    if (agreementStatusCtx && agreementStatusData.length > 0) {
+        const statusLabels = agreementStatusData.map(item => item.status);
+        const statusCounts = agreementStatusData.map(item => item.count);
+        const colors = [
+            'rgba(75, 192, 192, 0.8)',
+            'rgba(255, 99, 132, 0.8)',
+            'rgba(255, 205, 86, 0.8)',
+            'rgba(54, 162, 235, 0.8)',
+            'rgba(153, 102, 255, 0.8)'
+        ];
+
+        new Chart(agreementStatusCtx, {
+            type: "doughnut",
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusCounts,
+                    backgroundColor: colors.slice(0, statusLabels.length),
+                    borderColor: colors.slice(0, statusLabels.length).map(color => color.replace('0.8', '1')),
+                    borderWidth: 2,
+                    hoverBorderWidth: 3,
+                    cutout: '60%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.raw / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.raw} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    // Chart 7: Monthly Expiry Trend Chart
+    const monthlyExpiryTrendData = @json($monthlyExpiryTrend);
+    const monthlyExpiryCtx = document.getElementById("monthlyExpiryChart");
+    if (monthlyExpiryCtx && monthlyExpiryTrendData.length > 0) {
+        const expiryLabels = monthlyExpiryTrendData.map(item => item.period);
+        const expiredData = monthlyExpiryTrendData.map(item => item.expired);
+        const expiringData = monthlyExpiryTrendData.map(item => item.expiring);
+
+        new Chart(monthlyExpiryCtx, {
+            type: "line",
+            data: {
+                labels: expiryLabels,
+                datasets: [{
+                    label: "Expired",
+                    data: expiredData,
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    backgroundColor: "rgba(255, 99, 132, 0.2)",
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: "Expiring",
+                    data: expiringData,
+                    borderColor: "rgba(255, 205, 86, 1)",
+                    backgroundColor: "rgba(255, 205, 86, 0.2)",
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "top",
+                        labels: {
+                            usePointStyle: true,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw} agreements`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        },
+                        ticks: {
+                            stepSize: 1
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    // Chart 8: Expired Agreements Trend Chart
+    const expiredAgreementsData = @json($expiredAgreementsData);
+    const expiredAgreementsCtx = document.getElementById("expiredAgreementsChart");
+    if (expiredAgreementsCtx && expiredAgreementsData.length > 0) {
+        const expiredLabels = expiredAgreementsData.map(item => item.period);
+        const expiredCounts = expiredAgreementsData.map(item => item.expired_count);
+
+        new Chart(expiredAgreementsCtx, {
+            type: "bar",
+            data: {
+                labels: expiredLabels,
+                datasets: [{
+                    label: "Expired Agreements",
+                    data: expiredCounts,
+                    backgroundColor: "rgba(255, 99, 132, 0.8)",
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.raw} expired agreements`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        },
+                        ticks: {
+                            stepSize: 1
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    // Chart 9: Expiring Agreements Chart
+    const expiringAgreementsData = @json($expiringAgreementsData);
+    const expiringAgreementsCtx = document.getElementById("expiringAgreementsChart");
+    if (expiringAgreementsCtx && expiringAgreementsData.length > 0) {
+        const expiringLabels = expiringAgreementsData.map(item => item.period);
+        const expiringCounts = expiringAgreementsData.map(item => item.expiring_count);
+
+        new Chart(expiringAgreementsCtx, {
+            type: "bar",
+            data: {
+                labels: expiringLabels,
+                datasets: [{
+                    label: "Expiring Agreements",
+                    data: expiringCounts,
+                    backgroundColor: "rgba(255, 205, 86, 0.8)",
+                    borderColor: "rgba(255, 205, 86, 1)",
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.raw} expiring agreements`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        },
+                        ticks: {
+                            stepSize: 1
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: "rgba(0, 0, 0, 0.1)",
+                            drawBorder: false
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
 </script>
 @endpush

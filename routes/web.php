@@ -21,6 +21,12 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 Route::middleware('auth')->group(function () {
 
+    // AJAX endpoint for invoice chart data by month/year
+    Route::get('/home/invoice-chart-data', [HomeController::class, 'invoiceChartData'])->name('home.invoiceChartData');
+
+    // AJAX endpoint for top customers chart data by month/year
+    Route::get('/home/top-customers-chart-data', [HomeController::class, 'topCustomersChartData'])->name('home.topCustomersChartData');
+
 
     //  buildings Routes
     Route::prefix('buildings')->name('buildings.')->group(function () {
